@@ -1,0 +1,66 @@
+---
+title: Import multiple csv files and create a single data frame
+author: Rachit Kinger
+date: '2018-01-10'
+slug: import-multiple-csv-files-and-create-a-single-data-frame
+categories:
+  - r
+  - data science
+tags:
+  - plyr
+  - r
+  - bash
+  - read_csv
+subtitle: ''
+---
+
+
+
+<div id="a-simple-task" class="section level2">
+<h2>A simple task</h2>
+<p>Sounds like a simple task. You have multiple CSV files in a folder. You want to import each of them into your environment but into a single data frame. Here is the challenge: most new R users have only used <code>read.csv()</code> to import single files. I remember, when I was an R beginner, the very first time when I wanted to import a whole bunch of CSV files, the task of running <code>read.csv()</code> again and again sounded to me like a loop function.</p>
+</div>
+<div id="get-comfortable-with-apply" class="section level2">
+<h2>Get comfortable with apply()</h2>
+<p>I have learnt that the sooner you get comfortable with <code>apply()</code> and all its variants you will discover how easy it is going to make your life in R.</p>
+<div id="here-is-situation-i-am-dealing-with" class="section level3">
+<h3>Here is situation I am dealing with</h3>
+<pre class="bash"><code># bash commands below
+echo -n &quot;Total number of files: &quot; &amp;&amp; ls ~/Desktop/rawdata | wc -l</code></pre>
+<pre><code>## Total number of files: 25</code></pre>
+<p>As you can see, the total number csv files I have in my folder is 14. I already know that the files contain exactly the same columns. So all I have to do is import them into my environment one by one and then convert them into a single dataframe.</p>
+</div>
+<div id="step-1-import-them-into-the-environment" class="section level3">
+<h3>Step 1: import them into the environment</h3>
+<p>For this I will <code>read_csv()</code> function from the readr package.</p>
+<pre class="r"><code># get all the file names
+filenames &lt;- list.files()
+
+# read in the files into a single list
+all &lt;- lapply(filenames, function(name) {
+  readr:: read_csv(name)
+})</code></pre>
+<p>Now the files are in a list called <code>all</code>. Notice I could have gone about creating a <code>for</code> loop to get this done which is what I used to do when I first started to ramp up my R game and started to deal with multiple files. But then I started to get adventurous with <code>apply</code> and its siblings - <code>lapply</code>, <code>sapply</code>, <code>tapply</code>, <code>vapply</code>.</p>
+<p>Earlier my code would have looked like this:</p>
+<pre class="r"><code>all &lt;- list()
+for (i in filenames) {
+  all[i] &lt;- readr::read_csv(i)
+}</code></pre>
+<p>Now, nothing wrong with the above code. It does work (just a tad slower) but look at the elegance of the <code>lapply</code> code. Not only is it faster, it also has fewer lines.</p>
+</div>
+<div id="step-2-convert-all-list-items-into-a-single-dataframe" class="section level3">
+<h3>Step 2: convert all list items into a single dataframe</h3>
+<p>Now here, we will see the power of <code>rbind.fill()</code> which can be found in the plyr package. It is one line of code that will collapse the entire list into a single data frame.</p>
+<pre class="r"><code>df &lt;- plyr::rbind.fill(all)</code></pre>
+<p>There you go! Job done. The more comfortable you get with tidyverse (mother package of the tidy R philiosophy), the easier your R experience is going to be.</p>
+<p>Let’s take a look to see if everything is as expected. We can do a simple check to compare the total number of observations in the list with the total number of observations in the dataframe.</p>
+<pre class="r"><code># total number of rows in the list
+sum(
+  sapply(all, nrow))</code></pre>
+<pre><code>## [1] 33306</code></pre>
+<pre class="r"><code># total number of rows in the final data frame
+nrow(df)</code></pre>
+<pre><code>## [1] 33306</code></pre>
+<p>There you go!</p>
+</div>
+</div>

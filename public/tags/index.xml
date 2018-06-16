@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Tags on wackyCoup</title>
+    <link>/tags/</link>
+    <description>Recent content in Tags on wackyCoup</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <managingEditor>rachit.kinger@gmail.com (rachit kinger)</managingEditor>
+    <webMaster>rachit.kinger@gmail.com (rachit kinger)</webMaster>
+    <lastBuildDate>Wed, 10 Jan 2018 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="/tags/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Bash</title>
+      <link>/tags/bash/</link>
+      <pubDate>Wed, 10 Jan 2018 00:00:00 +0000</pubDate>
+      <author>rachit.kinger@gmail.com (rachit kinger)</author>
+      <guid>/tags/bash/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Plyr</title>
+      <link>/tags/plyr/</link>
+      <pubDate>Wed, 10 Jan 2018 00:00:00 +0000</pubDate>
+      <author>rachit.kinger@gmail.com (rachit kinger)</author>
+      <guid>/tags/plyr/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>R</title>
+      <link>/tags/r/</link>
+      <pubDate>Wed, 10 Jan 2018 00:00:00 +0000</pubDate>
+      <author>rachit.kinger@gmail.com (rachit kinger)</author>
+      <guid>/tags/r/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Read_csv</title>
+      <link>/tags/read_csv/</link>
+      <pubDate>Wed, 10 Jan 2018 00:00:00 +0000</pubDate>
+      <author>rachit.kinger@gmail.com (rachit kinger)</author>
+      <guid>/tags/read_csv/</guid>
+      <description></description>
+    </item>
+    
+  </channel>
+</rss>
