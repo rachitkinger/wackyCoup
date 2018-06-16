@@ -164,7 +164,7 @@
   
   
   &nbsp;|&nbsp;
-  <i class="fa fa-clock-o"></i> 3 minutes (501 words)
+  <i class="fa fa-clock-o"></i> 3 minutes (512 words)
   
   
 </span>
@@ -191,11 +191,12 @@
 <div id="get-comfortable-with-apply" class="section level2">
 <h2>Get comfortable with apply()</h2>
 <p>I have learnt that the sooner you get comfortable with <code>apply()</code> and all its variants you will discover how easy it is going to make your life in R.</p>
-<div id="here-is-situation-i-am-dealing-with" class="section level3">
-<h3>Here is situation I am dealing with</h3>
+<div id="here-is-the-situation-i-am-dealing-with" class="section level3">
+<h3>Here is the situation I am dealing with</h3>
 <pre class="bash"><code># bash commands below
 echo -n &quot;Total number of files: &quot; &amp;&amp; ls ~/Desktop/rawdata | wc -l</code></pre>
-<pre><code>## Total number of files: 25</code></pre>
+<pre><code>## Total number of files: ls: cannot access &#39;/home/rachitkinger/Desktop/rawdata&#39;: No such file or directory
+## 0</code></pre>
 <p>As you can see, the total number csv files I have in my folder is 14. I already know that the files contain exactly the same columns. So all I have to do is import them into my environment one by one and then convert them into a single dataframe.</p>
 </div>
 <div id="step-1-import-them-into-the-environment" class="section level3">

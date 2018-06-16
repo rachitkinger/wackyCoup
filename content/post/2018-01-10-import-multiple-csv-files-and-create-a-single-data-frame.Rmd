@@ -24,7 +24,7 @@ Sounds like a simple task. You have multiple CSV files in a folder. You want to 
 ## Get comfortable with apply()  
 I have learnt that the sooner you get comfortable with `apply()` and all its variants you will discover how easy it is going to make your life in R. 
 
-### Here is situation I am dealing with  
+### Here is the situation I am dealing with  
 
 ```{bash, echo = TRUE}
 # bash commands below
