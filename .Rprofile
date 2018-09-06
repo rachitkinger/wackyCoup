@@ -1,3 +1,3 @@
 options(blogdown.ext = ".Rmd",
-        blogdown.authoer = "Rachit Kinger")   
+        blogdown.author = "Rachit Kinger")   
 

@@ -16,7 +16,7 @@
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="wackyCoup" />
 
-  <meta name="generator" content="Hugo 0.42.1" />
+  <meta name="generator" content="Hugo 0.48" />
   <link rel="canonical" href="/post/" />
   <link rel="alternate" href="/post/index.xml" type="application/rss+xml" title="wackyCoup">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.7.1/katex.min.css" integrity="sha384-wITovz90syo1dJWVh32uuETPVEtGigN07tkttEqPv+uR2SE/mbQcG7ATL28aI9H0" crossorigin="anonymous">
@@ -157,6 +157,101 @@
         <div class="posts-list">
           
             <article class="post-preview">
+              <a href="/post/a-simple-process-to-start-exploratory-data-analysis/">
+                <h2 class="post-title">A simple process to start exploratory data analysis</h2>
+
+                
+              </a>
+
+              <p class="post-meta">
+                <span class="post-meta">
+  
+  
+  <i class="fa fa-calendar-o"></i>&nbsp;Posted on July 9, 2018
+  
+  
+  &nbsp;|&nbsp;
+  <i class="fa fa-clock-o"></i> 1 minutes (133 words)
+  
+  
+</span>
+
+
+              </p>
+              <div class="post-entry">
+                
+                  At work I often find myself with a new dataset. It is an exciting feeling to have successfully downloaded a large, recent dataset that is also clean. Often times I find these datasets need to be extracted from one of the platforms that we use at work. But without getting into how these datasets are extracted I will share some tips on how I approach the datasets in a way that helps me quickly derive some initial insights.
+                  <a href="/post/a-simple-process-to-start-exploratory-data-analysis/" class="post-read-more">[Read More]</a>
+                
+              </div>
+
+              
+                <div class="blog-tags">
+                  
+                    <a href="//tags/r/">r</a>&nbsp;
+                  
+                    <a href="//tags/eda/">EDA</a>&nbsp;
+                  
+                </div>
+              
+
+            </article>
+          
+            <article class="post-preview">
+              <a href="/post/sorting-the-bars-of-a-bar-chart-in-increasing-or-decreasing-order/">
+                <h2 class="post-title">Sorting the bars of a bar chart in increasing or decreasing order</h2>
+
+                
+              </a>
+
+              <p class="post-meta">
+                <span class="post-meta">
+  
+  
+  <i class="fa fa-calendar-o"></i>&nbsp;Posted on June 25, 2018
+  
+  
+  &nbsp;|&nbsp;
+  <i class="fa fa-clock-o"></i> 2 minutes (306 words)
+  
+  
+</span>
+
+
+              </p>
+              <div class="post-entry">
+                
+                  Here is a simple trick to make the bars in a bar chart appear in order of their height - highest to lowest (or lowest to highest).
+Let’s say we want to plot the number of cars of each class that we have in the mpg dataset.
+library(dplyr) library(ggplot2) mpg %&gt;% ggplot() + geom_bar(aes(x = class)) If you look at class(mpg$class) you will see that it is:
+## [1] &quot;character&quot; However, ggplot converts it into factor and if you convert it into factor you will notice that the orders in which the bars appear in the bar chart above is the same order in which the list has recorded the levels of the variable class.
+                  <a href="/post/sorting-the-bars-of-a-bar-chart-in-increasing-or-decreasing-order/" class="post-read-more">[Read More]</a>
+                
+              </div>
+
+              
+                <div class="blog-tags">
+                  
+                    <a href="//tags/r/">r</a>&nbsp;
+                  
+                    <a href="//tags/ggplot/">ggplot</a>&nbsp;
+                  
+                    <a href="//tags/geom_bar/">geom_bar</a>&nbsp;
+                  
+                    <a href="//tags/dataviz/">dataviz</a>&nbsp;
+                  
+                    <a href="//tags/data-manipulation/">data manipulation</a>&nbsp;
+                  
+                    <a href="//tags/reorder/">reorder</a>&nbsp;
+                  
+                    <a href="//tags/relevel/">relevel</a>&nbsp;
+                  
+                </div>
+              
+
+            </article>
+          
+            <article class="post-preview">
               <a href="/post/import-multiple-csv-files-and-create-a-single-data-frame/">
                 <h2 class="post-title">Import multiple csv files and create a single data frame</h2>
 
@@ -283,7 +378,7 @@
         </p>
         
         <p class="credits theme-by text-muted">
-          <a href="http://gohugo.io">Hugo v0.42.1</a> powered &nbsp;&bull;&nbsp; Theme by <a href="http://deanattali.com/beautiful-jekyll/">Beautiful Jekyll</a> adapted to <a href="https://github.com/halogenica/beautifulhugo">Beautiful Hugo</a>
+          <a href="http://gohugo.io">Hugo v0.48</a> powered &nbsp;&bull;&nbsp; Theme by <a href="http://deanattali.com/beautiful-jekyll/">Beautiful Jekyll</a> adapted to <a href="https://github.com/halogenica/beautifulhugo">Beautiful Hugo</a>
           
         </p>
       </div>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Eda on wackyCoup</title>
+    <link>/tags/eda/</link>
+    <description>Recent content in Eda on wackyCoup</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <managingEditor>rachit.kinger@gmail.com (rachit kinger)</managingEditor>
+    <webMaster>rachit.kinger@gmail.com (rachit kinger)</webMaster>
+    <lastBuildDate>Mon, 09 Jul 2018 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="/tags/eda/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>A simple process to start exploratory data analysis</title>
+      <link>/post/a-simple-process-to-start-exploratory-data-analysis/</link>
+      <pubDate>Mon, 09 Jul 2018 00:00:00 +0000</pubDate>
+      <author>rachit.kinger@gmail.com (rachit kinger)</author>
+      <guid>/post/a-simple-process-to-start-exploratory-data-analysis/</guid>
+      <description>At work I often find myself with a new dataset. It is an exciting feeling to have successfully downloaded a large, recent dataset that is also clean. Often times I find these datasets need to be extracted from one of the platforms that we use at work. But without getting into how these datasets are extracted I will share some tips on how I approach the datasets in a way that helps me quickly derive some initial insights.</description>
+    </item>
+    
+  </channel>
+</rss>

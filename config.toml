@@ -13,6 +13,9 @@ pygmentsCodefencesGuessSyntax = true
 #disqusShortname = "XXX"
 #googleAnalytics = "XXX"
 
+# to open links in a new tab
+[blackfriday] hrefTargetBlank = true
+
 [Params]
 # homeTitle = "Rachit Kinger" # Set a different text for the header on the home page
   subtitle = "my journey in the field of data science, digital inequality and linux..."

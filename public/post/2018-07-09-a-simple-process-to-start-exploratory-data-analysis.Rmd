@@ -1,0 +1,17 @@
+---
+title: A simple process to start exploratory data analysis
+author: Rachit Kinger
+date: '2018-07-09'
+slug: a-simple-process-to-start-exploratory-data-analysis
+categories:
+  - data science
+tags:
+  - r
+  - EDA  
+subtitle: ''
+---
+
+At work I often find myself with a new dataset. It is an exciting feeling to have successfully downloaded a large, recent dataset that is also clean. Often times I find these datasets need to be extracted from one of the platforms that we use at work. But without getting into how these datasets are extracted I will share some tips on how I approach the datasets in a way that helps me quickly derive some initial insights. These insights help me start conversations with other stakeholders who might be interested in knowing what I have found, and based on quick discussions with them I often end up with a few projects which require me and my team to dive deeper into these datasets.  
+
+### Step 1: If there isn't a problem, create one  
+

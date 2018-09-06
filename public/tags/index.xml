@@ -22,6 +22,51 @@
     </item>
     
     <item>
+      <title>Data Manipulation</title>
+      <link>/tags/data-manipulation/</link>
+      <pubDate>Mon, 25 Jun 2018 00:00:00 +0000</pubDate>
+      <author>rachit.kinger@gmail.com (rachit kinger)</author>
+      <guid>/tags/data-manipulation/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Dataviz</title>
+      <link>/tags/dataviz/</link>
+      <pubDate>Mon, 25 Jun 2018 00:00:00 +0000</pubDate>
+      <author>rachit.kinger@gmail.com (rachit kinger)</author>
+      <guid>/tags/dataviz/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Eda</title>
+      <link>/tags/eda/</link>
+      <pubDate>Mon, 09 Jul 2018 00:00:00 +0000</pubDate>
+      <author>rachit.kinger@gmail.com (rachit kinger)</author>
+      <guid>/tags/eda/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Geom_bar</title>
+      <link>/tags/geom_bar/</link>
+      <pubDate>Mon, 25 Jun 2018 00:00:00 +0000</pubDate>
+      <author>rachit.kinger@gmail.com (rachit kinger)</author>
+      <guid>/tags/geom_bar/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Ggplot</title>
+      <link>/tags/ggplot/</link>
+      <pubDate>Mon, 25 Jun 2018 00:00:00 +0000</pubDate>
+      <author>rachit.kinger@gmail.com (rachit kinger)</author>
+      <guid>/tags/ggplot/</guid>
+      <description></description>
+    </item>
+    
+    <item>
       <title>Plyr</title>
       <link>/tags/plyr/</link>
       <pubDate>Wed, 10 Jan 2018 00:00:00 +0000</pubDate>
@@ -33,7 +78,7 @@
     <item>
       <title>R</title>
       <link>/tags/r/</link>
-      <pubDate>Wed, 10 Jan 2018 00:00:00 +0000</pubDate>
+      <pubDate>Mon, 09 Jul 2018 00:00:00 +0000</pubDate>
       <author>rachit.kinger@gmail.com (rachit kinger)</author>
       <guid>/tags/r/</guid>
       <description></description>
@@ -45,6 +90,24 @@
       <pubDate>Wed, 10 Jan 2018 00:00:00 +0000</pubDate>
       <author>rachit.kinger@gmail.com (rachit kinger)</author>
       <guid>/tags/read_csv/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Relevel</title>
+      <link>/tags/relevel/</link>
+      <pubDate>Mon, 25 Jun 2018 00:00:00 +0000</pubDate>
+      <author>rachit.kinger@gmail.com (rachit kinger)</author>
+      <guid>/tags/relevel/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Reorder</title>
+      <link>/tags/reorder/</link>
+      <pubDate>Mon, 25 Jun 2018 00:00:00 +0000</pubDate>
+      <author>rachit.kinger@gmail.com (rachit kinger)</author>
+      <guid>/tags/reorder/</guid>
       <description></description>
     </item>
     
