@@ -1,0 +1,87 @@
+---
+title: Sorting the bars of a bar chart in increasing or decreasing order
+author: Rachit Kinger
+date: '2018-06-25'
+slug: sorting-the-bars-of-a-bar-chart-in-increasing-or-decreasing-order
+categories:
+  - data science
+tags:
+  - r
+  - ggplot
+  - geom_bar
+  - dataviz
+  - data manipulation
+  - reorder
+  - relevel
+subtitle: ''
+output:
+  blogdown::html_page:
+    toc: true
+    toc_depth: 1
+    number_sections: true
+---
+Here is a simple trick to make the bars in a bar chart appear in order of their height - highest to lowest (or lowest to highest).   
+
+Let's say we want to plot the number of cars of each class that we have in the `mpg` dataset.  
+```{r echo = FALSE, eval = TRUE}
+suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(library(ggplot2))
+```
+
+
+```{r echo = TRUE, eval = FALSE}
+library(dplyr)
+library(ggplot2)
+```
+
+```{r}
+mpg %>% 
+  ggplot() +
+  geom_bar(aes(x = class))
+```
+
+If you look at `class(mpg$class)` you will see that it is:  
+```{r echo = FALSE, eval = TRUE}
+class(mpg$class)
+```
+
+However, ggplot converts it into `factor` and if you convert it into factor you will notice that the orders in which the bars appear in the bar chart above is the same order in which the list has recorded the levels of the variable `class`. Let's take a look at it below:  
+
+```{r}
+levels(
+  as.factor(mpg$class)
+)
+```
+
+Let's say we want to change that order and we would like it to appear in decreasing (or increasing) order of count of each level of the dataset.  
+
+## Enter `reorder()`  
+
+`reorder`, as the name suggests, reorders the levels of a factor variable. The reordering happens based on another numeric variable.  
+
+In this case if we want to reorder the levels of `class` in decreasing (or increasing) order of counts we can do this:  
+
+```{r}
+class_reordered <- reorder(mpg$class, mpg$class, function(x) -length(x))
+levels(class_reordered)
+```
+
+We can see that levels have been reordered based on counts of each type of class. Let's take a look at how it will affect our bar plot.  
+
+```{r}
+mpg %>% 
+  ggplot() +
+  geom_bar(aes(x = reorder(class, class, function(x) -length(x)))) +
+  xlab("class")
+```
+
+There we go, job done. If we would like to reverse that order we can do so by changing the `function` argument in reorder.  
+
+```{r}
+mpg %>% 
+  ggplot() +
+  geom_bar(aes(x = reorder(class, class, function(x) length(x)))) +
+  xlab("class")
+```
+
+There you go.  
