@@ -19,6 +19,7 @@ output:
     toc: true
     toc_depth: 1
     number_sections: true
+draft: no
 ---
 Here is a simple trick to make the bars in a bar chart appear in order of their height - highest to lowest (or lowest to highest).   
 
