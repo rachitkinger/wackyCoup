@@ -1,14 +1,36 @@
+---
+title: Import multiple csv files and create a single data frame
+author: Rachit Kinger
+date: '2018-01-10'
+slug: import-multiple-csv-files-and-create-a-single-data-frame
+categories:
+  - r
+  - data science
+tags:
+  - plyr
+  - r
+  - bash
+  - read_csv
+subtitle: ''
+output:
+  blogdown::html_page:
+    toc: true
+    toc_depth: 1
+    number_sections: true
+draft: no
+---
+
 
 
 <div id="a-simple-task" class="section level2">
-<h2>A simple task</h2>
+<h2><span class="header-section-number">0.1</span> A simple task</h2>
 <p>Sounds like a simple task. You have multiple CSV files in a folder. You want to import each of them into your environment but into a single data frame. Here is the challenge: most new R users have only used <code>read.csv()</code> to import single files. I remember, when I was an R beginner, the very first time when I wanted to import a whole bunch of CSV files, the task of running <code>read.csv()</code> again and again sounded to me like a loop function.</p>
 </div>
 <div id="get-comfortable-with-apply" class="section level2">
-<h2>Get comfortable with apply()</h2>
+<h2><span class="header-section-number">0.2</span> Get comfortable with apply()</h2>
 <p>I have learnt that the sooner you get comfortable with <code>apply()</code> and all its variants you will discover how easy it is going to make your life in R.</p>
 <div id="here-is-the-situation-i-am-dealing-with" class="section level3">
-<h3>Here is the situation I am dealing with</h3>
+<h3><span class="header-section-number">0.2.1</span> Here is the situation I am dealing with</h3>
 <pre class="bash"><code># bash commands below
 echo -n &quot;Total number of files: &quot; &amp;&amp; ls ~/Desktop/rawdata | wc -l</code></pre>
 <pre><code>## Total number of files: ls: cannot access &#39;/home/rachit/Desktop/rawdata&#39;: No such file or directory
@@ -16,7 +38,7 @@ echo -n &quot;Total number of files: &quot; &amp;&amp; ls ~/Desktop/rawdata | wc
 <p>As you can see, the total number csv files I have in my folder is 14. I already know that the files contain exactly the same columns. So all I have to do is import them into my environment one by one and then convert them into a single dataframe.</p>
 </div>
 <div id="step-1-import-them-into-the-environment" class="section level3">
-<h3>Step 1: import them into the environment</h3>
+<h3><span class="header-section-number">0.2.2</span> Step 1: import them into the environment</h3>
 <p>For this I will <code>read_csv()</code> function from the readr package.</p>
 <pre class="r"><code># get all the file names
 filenames &lt;- list.files()
@@ -34,7 +56,7 @@ for (i in filenames) {
 <p>Now, nothing wrong with the above code. It does work (just a tad slower) but look at the elegance of the <code>lapply</code> code. Not only is it faster, it also has fewer lines.</p>
 </div>
 <div id="step-2-convert-all-list-items-into-a-single-dataframe" class="section level3">
-<h3>Step 2: convert all list items into a single dataframe</h3>
+<h3><span class="header-section-number">0.2.3</span> Step 2: convert all list items into a single dataframe</h3>
 <p>Now here, we will see the power of <code>rbind.fill()</code> which can be found in the plyr package. It is one line of code that will collapse the entire list into a single data frame.</p>
 <pre class="r"><code>df &lt;- plyr::rbind.fill(all)</code></pre>
 <p>There you go! Job done. The more comfortable you get with tidyverse (mother package of the tidy R philiosophy), the easier your R experience is going to be.</p>

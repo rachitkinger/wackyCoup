@@ -12,6 +12,12 @@ tags:
   - bash
   - read_csv
 subtitle: ''
+output:
+  blogdown::html_page:
+    toc: true
+    toc_depth: 1
+    number_sections: true
+draft: no
 ---
 
 ```{r setup, include=FALSE}
