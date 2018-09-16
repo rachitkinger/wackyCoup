@@ -1,0 +1,125 @@
+---
+title: Enable touchpad gestures on Ubuntu 18.04
+author: rachit kinger
+date: '2018-06-06'
+slug: enable-touchpad-gestures-on-ubuntu-18-04-on-dell-xps15-9560
+categories:
+  - linux
+tags:
+  - ubuntu
+  - '18.04'
+  - touchpad gestures
+  - gnome
+subtitle: ''
+draft: no
+---
+
+
+
+<p><em>Note: originally I wrote this post as <a href="https://askubuntu.com/a/1044184/783538">an answer on stackexchange</a>.</em></p>
+<p>Here is the problem: my laptop (Dell XPS-15 9560), has quite a good touchpad which work wonderfully smooth in Windows 10 but when I use Ubuntu (18.04, X.org) there is no out of the box functionality for multi-touch gestures like three fingers slide up.</p>
+<p>I have managed to get multi-gestures working on my computer. Kohei Yamada has developed an application called Fusuma to enable multi-touch gestures on Linux. It requires you to install Ruby on your machine if it isn’t already installed.</p>
+<p>Follow the instructions from fusuma <a href="https://github.com/iberianpig/fusuma/blob/master/README.md">GitHub’s Readme</a> page or you could follow these steps which worked for me:</p>
+<p>First of all check if your current user is part of the input group. You can do that by</p>
+<pre><code>sudo gpasswd -a $USER input  </code></pre>
+<p>Then log out and log back in. Now install xdotool and libinput-tools.</p>
+<pre><code>sudo apt-get install libinput-tools  
+
+sudo apt-get install xdotool  </code></pre>
+<p>If you haven’t installed Ruby you can do that now:</p>
+<pre><code>sudo apt install ruby  </code></pre>
+<p>Now install fusuma</p>
+<pre><code>gem install fusuma  </code></pre>
+<div id="deciding-your-gestures" class="section level2">
+<h2>Deciding your gestures</h2>
+<p>This is basically creating a <code>.yml</code> file with the desired configuration. If you want standard gestures you can follow these instructions or feel free to tweak around to get desired gestures.</p>
+<p>Go to your config folder in home directory.</p>
+<pre><code>cd ~/.config    </code></pre>
+<p>Now create a folder named <code>fusuma</code></p>
+<pre><code>mkdir fusuma  </code></pre>
+<p>In there create a file called <code>config.yml</code></p>
+<pre><code>touch config.yml   </code></pre>
+<p>Now you can use your favourite text editor to enter the contents in this file.</p>
+<pre><code>nano config.yml   </code></pre>
+<p>Copy and paste the following instructions if you are using GNOME, which is the default environment in 18.04.</p>
+<pre><code>swipe:
+  3: 
+    left: 
+      command: &#39;xdotool key alt+Right&#39;
+    right: 
+      command: &#39;xdotool key alt+Left&#39;
+    up: 
+      command: &#39;xdotool key super&#39;
+    down: 
+      command: &#39;xdotool key super&#39;
+  4:
+    left: 
+      command: &#39;xdotool key ctrl+alt+Down&#39;
+    right: 
+      command: &#39;xdotool key ctrl+alt+Up&#39;
+    up: 
+      command: &#39;xdotool key ctrl+alt+Down&#39;
+    down: 
+      command: &#39;xdotool key ctrl+alt+Up&#39;
+pinch:
+  in:
+    command: &#39;xdotool key ctrl+plus&#39;
+  out:
+     command: &#39;xdotool key ctrl+minus&#39;
+
+threshold:
+  swipe: 0.4
+  pinch: 0.4
+
+interval:
+  swipe: 0.8
+  pinch: 0.1</code></pre>
+<p>Note that the gestures that this configuration has created for you are the following:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Mult-touch Gesture</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>3 Fingers - Left</td>
+<td>Go Next on Browser</td>
+</tr>
+<tr class="even">
+<td>3 Fingers - Right</td>
+<td>Go Back on Browser</td>
+</tr>
+<tr class="odd">
+<td>3 Fingers - Up</td>
+<td>Show all Windows</td>
+</tr>
+<tr class="even">
+<td>3 Fingers - Down</td>
+<td>Close Exposé (Esc)</td>
+</tr>
+<tr class="odd">
+<td>4 Fingers - Left</td>
+<td>Next Desktop</td>
+</tr>
+<tr class="even">
+<td>4 Fingers - Right</td>
+<td>Previous Desktop</td>
+</tr>
+<tr class="odd">
+<td>4 Fingers - Up</td>
+<td>Next Desktop</td>
+</tr>
+<tr class="even">
+<td>4 Fingers - Down</td>
+<td>Previous Desktop</td>
+</tr>
+</tbody>
+</table>
+<p>After this you can run the command in terminal to test if it has installed</p>
+<pre><code>sudo fusuma  </code></pre>
+<p>nothing will happen in the terminal. Just start using your multi-touch gestures - swipe away on your touchpad.</p>
+<p>Now all you have to do is add Fusuma and the command for it in your start-up applications.</p>
+<p>Hope this helps.</p>
+</div>

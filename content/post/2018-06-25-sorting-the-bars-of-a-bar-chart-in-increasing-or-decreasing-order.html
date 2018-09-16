@@ -16,9 +16,9 @@ tags:
 subtitle: ''
 output:
   blogdown::html_page:
-    toc: true
+    toc: false
     toc_depth: 1
-    number_sections: true
+    number_sections: false
 draft: no
 ---
 
@@ -42,7 +42,7 @@ library(ggplot2)</code></pre>
 ## [6] &quot;subcompact&quot; &quot;suv&quot;</code></pre>
 <p>Let’s say we want to change that order and we would like it to appear in decreasing (or increasing) order of count of each level of the dataset.</p>
 <div id="enter-reorder" class="section level2">
-<h2><span class="header-section-number">0.1</span> Enter <code>reorder()</code></h2>
+<h2>Enter <code>reorder()</code></h2>
 <p><code>reorder</code>, as the name suggests, reorders the levels of a factor variable. The reordering happens based on another numeric variable.</p>
 <p>In this case if we want to reorder the levels of <code>class</code> in decreasing (or increasing) order of counts we can do this:</p>
 <pre class="r"><code>class_reordered &lt;- reorder(mpg$class, mpg$class, function(x) -length(x))
