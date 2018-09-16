@@ -2,7 +2,7 @@
 title: Enable touchpad gestures on Ubuntu 18.04
 author: rachit kinger
 date: '2018-06-06'
-slug: enable-touchpad-gestures-on-ubuntu-18-04
+slug: enable-touchpad-gestures-on-ubuntu-18-04-on-dell-xps15-9560
 categories:
   - linux
 tags:
