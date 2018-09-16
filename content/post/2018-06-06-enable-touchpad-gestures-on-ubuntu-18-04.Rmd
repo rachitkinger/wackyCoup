@@ -11,6 +11,7 @@ tags:
   - touchpad gestures
   - gnome
 subtitle: ''
+draft: no
 ---
 _Note: originally I wrote this post as [an answer on stackexchange](https://askubuntu.com/a/1044184/783538)._  
 
