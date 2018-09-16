@@ -16,9 +16,9 @@ tags:
 subtitle: ''
 output:
   blogdown::html_page:
-    toc: true
+    toc: false
     toc_depth: 1
-    number_sections: true
+    number_sections: false
 draft: no
 ---
 Here is a simple trick to make the bars in a bar chart appear in order of their height - highest to lowest (or lowest to highest).   
