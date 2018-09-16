@@ -1,4 +1,6 @@
 baseurl = "/"
+#disqusShortname = "XXX"
+googleAnalytics = "UA-125808741-1"
 DefaultContentLanguage = "en"
 #DefaultContentLanguage = "ja"
 title = "wackyCoup"
@@ -10,8 +12,8 @@ pygmentsCodeFences = true
 pygmentsCodefencesGuessSyntax = true
 #pygmentsUseClassic = true
 #pygmentOptions = "linenos=inline"
-#disqusShortname = "XXX"
-#googleAnalytics = "XXX"
+
+
 
 # to open links in a new tab
 [blackfriday] hrefTargetBlank = true
