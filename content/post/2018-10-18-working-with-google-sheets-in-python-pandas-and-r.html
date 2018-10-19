@@ -1,0 +1,114 @@
+---
+title: Working with Google Sheets in Python (Pandas) and R
+author: Rachit Kinger
+date: '2018-10-18'
+slug: working-with-google-sheets-in-python-pandas-and-r
+categories:
+  - data science
+  - r
+tags:
+  - python
+  - pandas
+  - googlesheets
+  - gspread-pandas
+  - google drive api
+  - oauth2
+subtitle: ''
+---
+
+
+
+<blockquote>
+<p>TLDR; if you want a funcationality similar to R’s <code>googlesheets</code> package in Python, go for <code>gspread_pandas</code> rightaway. The only additional step you wil have to do is download a credentials file from your Google developers console.</p>
+</blockquote>
+<p>Working in R I have had no problems working with Google Sheets. Reading, writing or editing data in Google Sheets has been quite easy. Thanks to the wonderful <a href="https://github.com/jennybc/googlesheets">googlesheets</a> package developed by <a href="https://jennybryan.org/">Jenny Bryan</a> and team. But how much I had taken its usability for granted became clear to me after I spent a day and a half trying to figure out how to get the same functionality within Python.</p>
+<p>In short, I had wanted to read in some data from a Google Sheets as a pandas DataFrame object and it took my simple brain ages to figure it out. I tried <a href="https://github.com/burnash/gspread">gspread</a>, <a href="https://pythonhosted.org/PyDrive/quickstart.html">pydrive</a>, and a few others until I came across <a href="https://pypi.org/project/gspread-pandas/">gspread_pandas</a> which I think is built on top of gspread. Thanks to <a href="https://github.com/aiguofer">Diego Fernandez</a> for building this wonderful package for people with limited Oauth experience and who don’t want to fiddle too much with flow, credentials and storage sequences that Google tried to <a href="https://developers.google.com/identity/protocols/OAuth2">teach</a> me! To be honest getting authenticated via PyDrive wasn’t that difficult but I don’t think it has the functionality to read Google Sheets in much the same effortless way that gspread_pandas can.</p>
+<div id="workflow-to-read-google-sheets-data-via-rs-googlesheets-package-and-pythons-gspread_pandas" class="section level2">
+<h2>Workflow to read Google Sheets data via R’s <code>googlesheets</code> package and Python’s <code>gspread_pandas</code></h2>
+<p>While there is a wonderful demo for R’s <code>googlesheets</code> <a href="https://github.com/jennybc/googlesheets">here</a>, I will show some quick steps to get the data from <a href="https://docs.google.com/spreadsheets/d/1Bmf8aK8VAMY4UHu2dN-4YwkhsIoh4yl3mTrhVWwN5ZQ/edit?usp=sharing">this</a> Google sheet on Gapminder data which contains life expectancy, total population, and GDP per capita since the year 1952 to 2007 for many countries.</p>
+<div class="figure">
+<img src="/post/2018-10-18-working-with-google-sheets-in-python-pandas-and-r_files/gapminder_googlesheets.png" alt="Gapminder data" />
+<p class="caption">Gapminder data</p>
+</div>
+<p>Rest of the tutorial is on how to access and read that file in.</p>
+<div id="credentials-and-getting-access-to-your-google-drive" class="section level4">
+<h4>Credentials and getting access to your Google Drive</h4>
+<div id="via-rs-googlesheets-package" class="section level5">
+<h5>Via R’s <code>googlesheets</code> package</h5>
+<p>This step opens up a new browser window which asks to select my Google account whose Google Drive I would like to give access to.</p>
+<pre class="r"><code>library(googlesheets)
+# generate new access token  
+gs_auth()</code></pre>
+<p>Simple right?</p>
+</div>
+<div id="via-python-gspread_python-package" class="section level5">
+<h5>Via Python <code>gspread_python</code> package</h5>
+<p>To achieve the same step in Python we have to first go to our Google developer account and do the following steps:</p>
+<ol style="list-style-type: decimal">
+<li>Visit your <a href="https://console.developers.google.com">Google console</a><br />
+</li>
+<li>If you don’t have a project create one<br />
+</li>
+<li>After you have created a project from the menu bar (three horizontal stripes on the top left side) go to APIs dashboard.<br />
+</li>
+<li>Select Library option and search for<br />
+4.1. Google Drive. Select it and click on Enable option<br />
+4.2. Google Sheets. Select it and click on Enable option<br />
+</li>
+<li>Now you have create your credentials. On the left-side menu click on Credentials<br />
+</li>
+<li>Click on <strong>Create Credentials</strong> and select OAuth client ID option.<br />
+</li>
+<li>If this is the first time you are doing this, Google will ask you to create a product (it assumes that you are creating this as part of an app or a product). Give it whatever name you like and click on <strong>Save</strong><br />
+</li>
+<li>Now Google asks what type of app is going to use these credentials. Select <strong>Other</strong> and click on <strong>Create</strong> button.<br />
+</li>
+<li>Click on <em>OK</em> and then download your credentials by clicking on the down arrow on the right side of created OAuth 2.0 client IDs and store the downloaded file on your file system. The writer of gspread_pandas advises that you should name the file as <code>google_secret.json</code> and move file to <code>~/.config/gspread_pandas/google_secret.json</code>. That’s where I stored mine. The folder did not exist, I created it myself.</li>
+</ol>
+<p>If you are with me so far you now have to go to Python (assuming that you have installed the package gspread-pandas already, if not you can run <code>pip install gspread-panadas</code> now). If all has gone well so far this step opens up a new browser window which asks to select my Google account whose Google Drive I would like to give access to.</p>
+<pre class="python"><code>from __future__ import print_function
+import pandas as pd
+from gspread_pandas import Spread, Client  
+
+# replace my name &#39;rachitkinger&#39; with whatever user name you want  
+# note that you have to provide the exact title of the spreadsheet
+# which is Gapminder in this case  
+gapminder = Spread(&#39;rachitkinger&#39;, &#39;Gapminder&#39;)</code></pre>
+</div>
+</div>
+<div id="reading-in-the-data-as-a-dataframe" class="section level4">
+<h4>Reading in the data as a DataFrame</h4>
+<p>By this point in R you should have authenticated your library to access your Google Drive files and in Python, not only have you done that bit, but you have also gotten access to the specific Google Sheets file you want to work with.</p>
+<div id="via-rs-googlsheet-package" class="section level5">
+<h5>via R’s <code>googlsheet</code> package</h5>
+<p>In <code>googlesheets</code> you have to first ‘register’ a spreadsheet before you can work with it.</p>
+<pre class="r"><code>library(dplyr)
+# identify and register the sheet  
+gapminder_sheet &lt;- gs_title(&quot;Gapminder&quot;)</code></pre>
+<p>Note that the Gapminder spreadsheet has a worksheet for each continent. Let’s say we want to read in the data for all countries in Oceania. The name of that worksheet is ‘Oceania’ which will be the value we will pass to <code>ws</code> parameter in our function call. Since it is the fifth worksheet we could have also passed an integer call <code>5</code>.</p>
+<pre class="r"><code># now read it in as a dataframe (or tibble in this case)  
+# Note that in the Gapminder
+gapminder_oceania &lt;- gs_read(gapminder_sheet, ws = &quot;Oceania&quot;)
+# alternatively
+## gapminder_oceania &lt;- gs_read(gapminder_sheet, ws = 5)</code></pre>
+<p>That’s it. You are ready to roll. Take a look at your dataframe.</p>
+<pre class="r"><code>head(gapminder_oceania)</code></pre>
+<pre class="r"><code># A tibble: 6 x 6
+  country   continent  year lifeExp      pop gdpPercap
+  &lt;chr&gt;     &lt;chr&gt;     &lt;int&gt;   &lt;dbl&gt;    &lt;int&gt;     &lt;dbl&gt;
+1 Australia Oceania    1952    69.1  8691212    10040.
+2 Australia Oceania    1957    70.3  9712569    10950.
+3 Australia Oceania    1962    70.9 10794968    12217.
+4 Australia Oceania    1967    71.1 11872264    14526.
+5 Australia Oceania    1972    71.9 13177000    16789.
+6 Australia Oceania    1977    73.5 14074100    18334.</code></pre>
+</div>
+<div id="via-pythons-gspread-pandas-package" class="section level5">
+<h5>via Python’s <code>gspread-pandas</code> package</h5>
+<p>Here we do not need to ‘register’ or ‘identify’ the worksheet since we have already done that as part of the authentication process. So we can straight away read in the dataframe. However, do note the indexing difference between Python and R will come into play here. The 5<sup>th</sup> worksheet will have the index 4 in Python.</p>
+<pre class="python"><code># note that sheet=4 since Python indexing starts from 0
+gapminder_oceania = gapminder.sheet_to_df(sheet=4)</code></pre>
+<p>Voila! Job done. Hope this was useful.</p>
+</div>
+</div>
+</div>
