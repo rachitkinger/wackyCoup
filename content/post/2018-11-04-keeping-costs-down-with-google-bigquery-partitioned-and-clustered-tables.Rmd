@@ -1,0 +1,21 @@
+---
+title: Keeping costs down with Google BigQuery - Partitioned and Clustered tables
+author: Rachit Kinger
+date: '2018-11-04'
+slug: keeping-costs-down-with-google-bigquery-partitioned-and-clustered-tables
+categories:
+  - data science
+tags:
+  - BigQuery
+  - clustered table
+  - partitioned table
+  - gcloud sdk
+  - bq make
+  - bq load
+  - bigquery schema
+  - load data in clustered table
+  - google cloud paltform
+subtitle: ''
+draft: true
+---
+Creating partitioned tables
