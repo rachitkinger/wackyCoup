@@ -15,10 +15,52 @@ tags:
   - bigquery schema
   - load data in clustered table
   - google cloud paltform
+  - web analytics
 subtitle: ''
 draft: true
 ---
 
 
 
-
+<p>The ability to <a href="https://cloud.google.com/bigquery/docs/partitioned-tables">partition tables</a> in BigQuery has been around for some time, and for people who deal with time series data this is a real boon. It is not only a cost saver but also a great time saver. There are two ways of partition a BigQuery table:</p>
+<ol style="list-style-type: decimal">
+<li>Based on ingestion time, and<br />
+</li>
+<li>Based on a user specified date column</li>
+</ol>
+<p>As I deal with large amount of web analytics data, for over 200 sites, the ability to day-partition has been a very useful one. A single month’s data goes into terabytes and since BigQuery charges on the amount of data being queried (in addition to the amount of data being stored) a partitioned table allows me to specify my period of interest by date which can reduce the amount of data being queried drastically. However, even with day partitioning, a single day’s worth of data used to be upwards of 40-50 GB. And in the news business, the smallest useful period of analysis is a week which for my data always ended up close to 350 GB of data. Since people have daily routines around news consumption that vary more by day of the week then by week of the month, a week on week analysis lends itself to a good period for trend analysis.</p>
+<p>For me the challenge was that I didn’t always want to analyse all my websites. In fact even if I wanted analyse just one of my 200 sites, my queries would effectively read a column for all my 200 sites. Sounds wasteful, suboptimal and not to mention, expensive. Enter clustered tables. In this post, I will cover how clustered tables helped me to solve that problem, and then some :)</p>
+<div id="creating-clustered-tables" class="section level2">
+<h2>Creating clustered tables</h2>
+<p>As far as I know, clustered tables are only created on time partitioned tables. While BigQuery’s web UI is quite capable, at the time of writing this post, it is not possible to create clustered tables via BigQuery’s web UI. The way I did it was to create a table first via command line interface (CLI) and then loaded my data into these clustered tables.</p>
+<p>For this use case I am assuming the data is stored in GCS and that it is ndjson and compressed files. While it possible to create a partitioned table at the time of loading the data (as in the table creation and loading data into it can be done at the same time) it is not possible (as of now) to simultaneously create a clustered table. Hence this is a two step process where Step 1 is to create an empty table; and Step 2 is to load data into it.</p>
+<p>In my dataset, I have over 130 columns but the columns of interest look like this:</p>
+<pre><code>##                 timestamp site_code    event
+## 1 2018-10-31 13:45:30 UTC    Site_1 pageview
+## 2 2018-10-30 12:45:34 UTC    Site_2  event_1
+## 3 2018-10-29 15:05:24 UTC    Site_1  event_2
+## 4 2018-10-28 11:15:54 UTC    Site_3 pageview
+## 5 2018-10-27 01:45:11 UTC    Site_n  event_n</code></pre>
+<p>Given my sample dataset my schema will look like this:</p>
+<pre class="r"><code>[
+  {&quot;name&quot; : &quot;timestamp&quot;,
+    &quot;type&quot;: &quot;TIMESTAMP&quot;,
+    &quot;mode&quot;: &quot;NULLABLE&quot;},
+  {&quot;name&quot; : &quot;site_code&quot;,
+    &quot;type&quot;: &quot;STRING&quot;,
+    &quot;mode&quot;: &quot;NULLABLE&quot;},
+  {&quot;name&quot; : &quot;action&quot;,
+    &quot;type&quot;: &quot;STRING&quot;,
+    &quot;mode&quot;: &quot;NULLABLE&quot;}
+]</code></pre>
+<p>For the sake of simplicity store the above json in current working directory as myschema.json</p>
+<p><strong>Note</strong> that my partitioning filed is going to be <code>timestamp</code> and my clustering fields are going to be <code>site_code</code> and <code>action</code>. The order in which clustering is done matters. <strong>Remember the clustering order when you run queries on table.</strong></p>
+<p>Create a dataset in BigQuery called <code>my-dataset</code>.</p>
+<p>Now call gcloud sdk’s bq command in your terminal to create a table.</p>
+<pre class="bash"><code>bq mk -t --schema ./myschema.json --time_partitioning_type=DAY --time_partitioning_field=timestamp --require_partition_filter=TRUE --clustering_fields=&#39;site_code,action&#39; my-dataset.my-clustered-table</code></pre>
+<p>This should create a new table called <code>my-clustered-table</code> within an existing dataset called <code>my-dataset</code>.</p>
+<p>Now load the data into the table using gcloud sdk’s bq command in your terminal.</p>
+<pre class="bash"><code>bq load --source_format=NEWLINE_DELIMITED_JSON --max_bad_records=1000 my-dataset.my-clustered-table gs://my-bucket/my-json-files/*
+</code></pre>
+<p>This should do the job.</p>
+</div>
