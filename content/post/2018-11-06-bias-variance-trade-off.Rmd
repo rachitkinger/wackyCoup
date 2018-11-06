@@ -1,0 +1,24 @@
+---
+title: A very simple explanation for the bias variance trade Off
+author: Rachit Kinger
+date: '2018-11-06'
+slug: bias-variance-trade-off
+categories:
+  - data science
+tags:
+  - bias-variance trade off
+  - bias in machine learning
+  - variance in machine learning
+  - statistical learning
+subtitle: ''
+---
+Reading through any statistical learning text one is bound to come across the bias-variance trade-off quite regularly. The concept is fundamental to understanding why certain models are better than others for a given problem. Here is a simple explanation of what we talk about when we talk about bias-variance trade off.   
+
+## What is variance in a statistical model when we talk of bias variance trade off?  
+Variance = variance in the model if we had used a different training set. If we build a model that is highly tuned to be accurate on the given training set, then its parameters (or coefficients) are unique to the training set and hence will have little generalisability.  
+
+## What is bias in a statistical model when we talk of bias variance trade off?  
+Bias = variance due the assumption of the model itself. Essentially, a model tries to approximate the 'real' relationship between independent and dependent variables by using mathematical relationships. These approximations may not always be true. For example, a linear regression model will only give us a linear relationship between independent and dependent variables even if the true relationship is non-linear. 
+
+There is a lot more one can say about bias-variance trade off and at the time of selecting your final model always spend a moment to think about how much of your variance is due to the 'bias' in the model and how much is due to 'hyper-tuning'.  
+
