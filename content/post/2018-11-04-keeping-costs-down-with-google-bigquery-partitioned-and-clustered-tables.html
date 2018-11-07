@@ -1,7 +1,7 @@
 ---
 title: Keeping costs down with Google BigQuery - Partitioned and Clustered tables
 author: Rachit Kinger
-date: '2018-11-04'
+date: '2018-11-07'
 slug: keeping-costs-down-with-google-bigquery-partitioned-and-clustered-tables
 categories:
   - data science
@@ -17,7 +17,6 @@ tags:
   - google cloud paltform
   - web analytics
 subtitle: ''
-draft: true
 ---
 
 
@@ -63,4 +62,24 @@ draft: true
 <pre class="bash"><code>bq load --source_format=NEWLINE_DELIMITED_JSON --max_bad_records=1000 my-dataset.my-clustered-table gs://my-bucket/my-json-files/*
 </code></pre>
 <p>This should do the job.</p>
+<p>Now when a query is run, it is important to note two things:</p>
+<ol style="list-style-type: decimal">
+<li>Date partitioning - remember to specify the date range of interest or else BQ will query the entire database<br />
+</li>
+<li>Remember to not just use the clustering fields but to use them in the same order in which they were specified at the time of creation of table</li>
+</ol>
+<p>So, let’s assume that I need to run a query that shows me all the pageviews for my website called Site_1 for the month of Sep-2018. For a non-clustered table my query will look like this:</p>
+<pre class="sql"><code>--running this query on a non-clustered table and clustered table
+SELECT 
+  *
+FROM 
+  `my-project:my-dataset.my-clustered-table`
+WHERE 
+  timestamp BETWEEN
+    TIMESTAMP(&quot;2018-09-01&quot;) AND TIMESTAMP(&quot;2018-09-30&quot;)
+  AND site_code = &quot;Site_1&quot; --clustering order is important here
+  AND action = &quot;pageview&quot; 
+</code></pre>
+<p>The above query for me typically queried 1TB of data. But the same query on a clustered table, on average, queries less than 100GB of data. That is a saving of 90% on the original query. Note that BigQuery is not very accurate at predicting the amount of data that will be queried when the table is partitioned. Google plays it safe by predicting the maximum size of the table that is likely to be queried. In my experiene Google predicts that the above query would read 500GB data even though it reads 1/5<sup>th</sup> of that.</p>
+<p>Hope this was helpful. Happy querying.</p>
 </div>
