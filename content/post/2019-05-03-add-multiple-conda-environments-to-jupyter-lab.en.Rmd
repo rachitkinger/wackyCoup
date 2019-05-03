@@ -1,0 +1,36 @@
+---
+title: Add multiple conda environments to Jupyter Lab
+author: Rachit Kinger
+date: '2019-05-03'
+slug: add-multiple-conda-environments-to-jupyter-lab
+categories:
+  - data science
+  - linux
+tags:
+  - python
+  - conda environments
+  - jupyter notebook
+subtitle: ''
+draft: FALSE
+---
+So I have multiple conda environments but I have two main ones - one which I use as base and one for quick data science explorations. When I'm working on a specific project I usually end up building a specific environment for that project _(yes I don't use docker for every project. I just find it easier to spin up a new environment for simple tasks)_  
+
+I recently reformatted my comptuer and set-up my usual dual-boot - Ubuntu 18.04 and Windows 10. I installed Jupyter Lab on my `base` environment. Inside Jupyter Lab I tried to fire up my data science explorations environment (`ds-base`) and realised that Jupyter was not showing it as one of my available interpreters.  
+
+Long story short, I did the following to enable my `ds-base` environment to show up in my Jupyter Lab, and I think this logic can be extended to as many environments available in your system.    
+
+In your bash/terminal enter the following commands:  
+
+```{echo=TRUE, execute=FALSE}  
+$ conda activate base  
+(base) $ conda install ipykernel  
+(base) $ ipython kernel install --user --name=ds-base  
+(base) $ conda deactivate  
+
+```  
+
+That's it. Now when I fire up my Jupyter Lab from within my `base` environment I also see my `ds-base` env available as an interpreter. I haven't tested it in great detail but it appears to me that the above steps should work even if you want to use it for a virtualenv.  
+
+
+Hope this was helpful.  
+
