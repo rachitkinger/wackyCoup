@@ -16,7 +16,8 @@ pygmentsCodefencesGuessSyntax = true
 
 
 # to open links in a new tab
-[blackfriday] hrefTargetBlank = true
+[blackfriday] 
+  hrefTargetBlank = true
 
 [Params]
 # homeTitle = "Rachit Kinger" # Set a different text for the header on the home page
@@ -68,6 +69,7 @@ pygmentsCodefencesGuessSyntax = true
 #  vk = "username"
 #  paypal = "username"
 #  telegram = "username"
+  ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
 
 [[menu.main]]
     name = "Blog"
