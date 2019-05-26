@@ -1,0 +1,24 @@
+---
+title: How to use your system's default R in Anaconda or Jupyter Notebooks
+author: Rachit Kinger
+date: '2019-05-26'
+slug: how-to-use-your-systems-default-r-in-anaconda-or-jupyter-notebooks
+categories:
+  - r
+  - data science
+tags:
+  - anaconda
+  - jupyter notebook
+  - r
+subtitle: ''
+---
+
+When using Jupyter Notebooks I like to use the version of R that I use by default in RStudio and not Anconda R. To enable this I do the following:  
+
+1. DO NOT install Anaconda R (assuming you have installed Anaconda)  
+2. Using R in your terminal -- on linux it is `ctrl + alt + t` simply type R on the command line  
+3. Once in R in your terminal (not in RStudio), install IRkernel package by typing `install.packages("IRkernel")` and enter  
+4. After IRkernel is installed enter the command: `IRkernel::installspec()`  
+
+This should do the trick. Now open Jupyter Notebook or Lab and you should be able to use your default R kernel.  
+
