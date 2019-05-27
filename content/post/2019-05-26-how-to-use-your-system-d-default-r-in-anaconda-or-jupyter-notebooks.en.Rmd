@@ -22,3 +22,14 @@ When using Jupyter Notebooks I like to use the version of R that I use by defaul
 
 This should do the trick. Now open Jupyter Notebook or Lab and you should be able to use your default R kernel.  
 
+If you are on Windows you have to follow slightly different steps, I've tried to lay them down below (note I've only tried it on Windows 10):  
+
+1. Get the path to your Window's R. Usually it is in `C:\Program Files\R\R-3.6.0\bin`  
+2. Now go to Anaconda Prompt (you should have this if you installed Anaconda3). Just search for it on your Start Menu  
+3. Navigate to your R path `cd C:\Program Files\R\R-3.6.0\bin` or at least mine is    
+4. Start R in this shell by typing `R.exe` and hitting enter  
+5. Now install IRkernel package as you would do normally - `install.packages("IRkernel")`  
+6. Once installed enter the command: `IRkernel::installspec()`  
+
+That's it. That should do the trick. Now fire up your Jupyter Notebook or Lab and you should be able to use your default system R kernel.  
+
