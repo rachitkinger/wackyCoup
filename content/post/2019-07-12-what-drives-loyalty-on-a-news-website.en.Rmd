@@ -1,0 +1,49 @@
+---
+title: What drives loyalty on a news website?
+author: Rachit Kinger
+date: '2019-07-12'
+slug: what-drives-loyalty-on-a-news-website
+categories:
+  - data science
+  - r
+  - content analysis
+tags:
+  - nlp
+  - content analysis
+  - tidytext
+  - network analysis
+  - google autoML
+subtitle: 'Using Tidytext, networking analysis, Google AutoML and the works'
+draft: true
+---
+
+## Summary  
+XXXXXX Features of content (metadata and actual content) was used to determine whether highly loyal audience consume more of a certain type of content or not. 
+IS THIS GOING TO BE A MULTI-PART SERIES?
+
+## Context  
+Websites often care about scale and depth. Content websites, like the ones I work for, where we publish news it is difficult to balance both. By scale, I mean getting as many people as possible to read our content. By depth, I mean getting people to read our content as frequently as possible. Simply speaking, scale requires us to reach more people while depth requires us to reach more people more frequently. As you can probably tell it is not easy to achieve both. There is perhaps an argument to be made here that a strategy which achieves one cannot achieve the other but that's for a later discussion. 
+
+## Business objective  
+It's no secret that news publishing industry is in trouble _(citation needed)_. Revenue from print both, advertising and subscription, has been steadily declining and digital advertising, which at one point did seem to be the answer to all our woes is no longer painting a rosy picture. That leaves just one front, revenue from online readers; quite literally **the final frontier**. Without trying to sound like a doomsayer I do believe it is all or nothing when it comes to this battlefront with the quintessential question being, _"how can we create content and experiences that our online readers will pay for?"_  
+
+Goes without saying, if we care for our readers our readers will care for us, but that's easier said than done. Let's say that while our long term goal is to reach a position where our readers pay for the content we produce, in the short to medium term we want to build depth in our readership i.e. they visit us frequently.  
+
+### It's all about habits  
+If we were to ascribe a level of loyalty to our readers and assume that frequent readers are loyal to us
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
