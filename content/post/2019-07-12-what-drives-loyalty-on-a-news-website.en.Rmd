@@ -37,6 +37,7 @@ When it comes to subscription to news sites, my core belief is that people will 
 - __Challenge 1: Habit of news consumption is not the same as habit to my webiste__ Given the amount of free content available online how can one establish that the 'habit' that a publishers 'sees' on their site is specific to that site? After all, most news aggregators (Google News, Apple News, Samsung News) tend to club topics together. If a reader is interested in on the topic of 'BREXIT', then the news aggregator is likely to pepper their feed with BREXIT stories from various news sites and the reader is likely to visit more than one website.  
 - __Challenge 2: Consuming freely available news is not the same as paying for news__ If anything it depends on the price. A £35 monthly subscription (FT.com) is very different from £10 monthly subscription. How elastic is your user-base's demand is a more complex question.  
 
+**REMEMBER THAT THE BIGRAM ANALYSIS IS A TYPE OF COLLOCATION - KEYPHRASE EXTRACTION EXERCISE**  
 
 
 
