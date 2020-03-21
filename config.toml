@@ -21,7 +21,7 @@ pygmentsCodefencesGuessSyntax = true
 
 [Params]
 # homeTitle = "Rachit Kinger" # Set a different text for the header on the home page
-  subtitle = "my journey in the field of data science, digital inequality and linux..."
+  subtitle = "my journey in the field of data science, digital media and linux..."
 #  logo = "img/avatar-icon-wc.png"
 #  favicon = "img/favicon-wc.ico"
   dateFormat = "January 2, 2006"
