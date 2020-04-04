@@ -1,0 +1,163 @@
+---
+title: Parallel processing of nested for-loops with examples for AdaBoost and SVM in R  
+author: Rachit Kinger
+date: '2020-04-04'
+slug: parallel-processing-nested-for-loops-with-examples-for-adaboost-and-svm-in-r
+categories:
+  - data science
+  - r
+tags:
+  - parallel processing
+  - AdaBoost  
+  - JOUSBoost  
+  - foreach  
+  - SVM
+  - nested for loop
+  - grid search
+  - machine learning
+subtitle: ''
+---
+
+
+
+<p>Let’s say we have a machine learning model that we want to further optimize by tuning parameters or hyper-parameters. This is generally called a grid search. While there are ways like random search and gradient based search, let’s just say we have decided to perform a grid search across two parameters and we want an efficient way of doing that. By efficient here, I mean compute efficiency. We all have laptops that have more than one core and we want to make good use of those cores to speed up our model optimisation.</p>
+<p>In this post I will show you how to quickly do parallel processing using nested for-loops across. I will show you two examples in order to do this:</p>
+<ul>
+<li>AdaBoost<br />
+</li>
+<li>Support vector machines (SVM)</li>
+</ul>
+<div id="example-1-parallel-processing-for-optimizing-adaboost-in-r" class="section level2">
+<h2>Example 1: Parallel processing for optimizing AdaBoost in R</h2>
+<p>Two main parameters for an AdaBoost model are:</p>
+<ol style="list-style-type: decimal">
+<li>number of trees or classifiers<br />
+</li>
+<li>depth of each individual tree or classifier</li>
+</ol>
+<p>The original AdaBoost model, also called AdaBoost.M1 had default value for the 2nd variable (tree depth was 1) and these trees were called stumps (a literal metaphor for a short tree). Nowadays it is not uncommon to see AdaBoost with a much greater tree depth (upto 8!) with a large number of classifiers (&gt;500), however, which combination of tree depth and number of trees gave us the most optimal requires us to compute each combination and observe the training and validation accuracy. This sounds like a compute intensive job which are going to optimize using parallel processing.</p>
+<p>For our example we are going to vary number of trees from 10 upto 200 (but this could go as much as 1000 or even higher), and we are going to vary tree depth from 1 to 3 (but this could go very high, generally not recommended to higher than 8)</p>
+<pre class="r"><code>tree_depth = c(1,2,3)  
+n_trees = seq(from = 10,
+              to = 200,
+              by = 10)  
+
+# this is going to require building 60 models (length(tree_depth) * length(n_trees))  
+
+library(doSNOW) # package for parallel computing in R  
+library(foreach) # package that converts nested for loops into parallel processes and passes it to doSNOW for parallel processing  
+
+
+numOfClusters &lt;- 10 # this is the number cores available in your computer
+# My computer has 16 but I&#39;m using 10 so that I have a few cores available for my OS to run other processes  
+# you can find out how many cores you have by running this --&gt; parallel::detectCores() in your R console  
+
+cl &lt;- makeCluster(numOfClusters) # define your clusters
+registerDoSNOW(cl) # register your clusters so that when you deploy them doSNOW knows what to do  
+
+# Now the thing to note is that foreach() loop returns list items so you need 
+# be very sure what you want it to return.  
+# I generally return the model as well as its validation metrics so that it is easy for me to
+# view them all together  
+
+
+# the key to nested for loop in foreach package is %:% operator which tells creates
+# parallelises the inside loop  
+# then the %dopar% operator actually tells doSNOW to implement the parallel process in a cluster
+
+adaBoost_grid &lt;- 
+  foreach(t = tree_depth) %:% 
+    foreach(n = n_trees) %dopar% {
+      library(JOUSBoost) # package for deploying AdaBoost. We have to call it inside our parallel cluster
+      mod = adaboost(X = train_dat, y=train_labels, tree_depth = t, n_rounds =n)
+      # now pretty much the parallel processing is done
+      # but we need to return the values we need from each sub-process so
+      # that we can compile our resutls later  
+      # the lines below do exactly that:- 
+      
+      # training results, the JOUSBoost model object returns a confusion matrix measured on training data
+      # we will use that to calculate training metrics  
+      tr_conf = mod$confusion_matrix
+      tr_precision = tr_conf[2,2]/sum(tr_conf[,2])
+      tr_recall = tr_conf[2,2]/sum(tr_conf[2,])
+      tr_accuracy = (tr_conf[1,1] + tr_conf[2,2]) / length(train_labels)
+      tr_f1_score = 2 * tr_precision * tr_recall / (tr_precision + tr_recall)
+      
+      # we will also, inside each of the subprocess calculate our validation metrics
+      # we have a dataset called test_data we will use for that
+      preds = JOUSBoost::predict.adaboost(mod, X=test_data, type=&quot;response&quot;)
+      conf = table(test_labels, preds)
+      precision = conf[2,2]/sum(conf[,2])
+      recall = conf[2,2]/sum(conf[2,])
+      accuracy = (conf[1,1] + conf[2,2]) / length(test_labels)
+      f1_score = 2 * precision * recall / (precision + recall)
+    
+      # metrics to append in to a single row of a dataframe for easy
+      # review later on
+      model_results = data.frame(algo = &quot;AdaBoost&quot;,
+                           tree_depth = t,
+                           n_trees = n,
+                           accuracy = accuracy,
+                           precision = precision,
+                           recall = recall,
+                           f1_score = f1_score,
+                           training_accuracy = tr_accuracy,
+                           training_precision = tr_precision,
+                           training_recall = tr_recall,
+                           training_f1_score = tr_f1_score,
+                           stringsAsFactors = FALSE)
+      
+      # final list item to return
+      list(model = mod, metrics = model_results)
+      
+    }
+stopCluster(cl) # DON&quot;T FORGET TO STOP ALL YOUR CLUSTERS!  </code></pre>
+<p>That’s all it takes to run an efficient grid search for AdaBoost.</p>
+</div>
+<div id="example-2-parallel-processing-for-optimizing-svm-in-r" class="section level2">
+<h2>Example 2: Parallel processing for optimizing SVM in R</h2>
+<p>For SVM we will use the <code>e10171</code> package and use the <code>tune.out()</code> function which performs tuning of our SVM model. There are quite a few parameters in SVM that we can optimize and performing a grid search sequentially across each of them is going to take hours. For example we are going to do a grid search across two parameters:<br />
+1. gamma, we will use values from 0.005 to 1<br />
+2. degree of the polynomial. We are using a polynomial SVM and we want to test out a quadratic polynomial as well as a degree 3 polynomial</p>
+<pre class="r"><code>gamma &lt;- c(0.005, 0.01, 0.02, 0.1, 0.5 , 1)
+degree &lt;- c(2,3)
+
+library(doSNOW) # package for parallel computing in R  
+library(foreach) # package that converts nested for loops into parallel processes and passes it to doSNOW for parallel processing  
+
+
+numOfClusters &lt;- 10 # this is the number cores available in your computer
+# My computer has 16 but I&#39;m using 10 so that I have a few cores available for my OS to run other processes  
+# you can find out how many cores you have by running this --&gt; parallel::detectCores() in your R console  
+
+cl &lt;- makeCluster(numOfClusters) # define your clusters
+registerDoSNOW(cl) # register your clusters so that when you deploy them doSNOW knows what to do  
+
+# Now the thing to note is that foreach() loop returns list items so you need 
+# be very sure what you want it to return.  
+# I generally return the model as well as its validation metrics so that it is easy for me to
+# view them all together  
+
+
+# the key to nested for loop in foreach package is %:% operator which tells creates
+# parallelises the inside loop  
+# then the %dopar% operator actually tells doSNOW to implement the parallel process in a cluster
+
+svm_poly &lt;- foreach(g = gamma)) %:% 
+  foreach(d = degree %dopar% {
+  library(e1071) # we have to call the library inside each cluster
+  tune.out = tune(svm, label~., data = train_data, kernel = &quot;polynomial&quot;,
+                  cross = 10,
+                  ranges = list(cost = c(0.1 , 0.5 ,1 , 1.5 , 2 ), gamma = g,  degree = d ))
+  
+  # for each combination of gamma and degree we will retrieve  
+  # model object so that we can use it to predict  
+  # model&#39;s parameters so that we can select the best one  
+ list(best_model = tune.out$best.model, best_params = tune.out$best.parameters) 
+}
+
+
+stopCluster(cl) # DONT FORGET TO STOP YOUR CLUSTERS!</code></pre>
+<p>That’s all we need to run nested for loops in parallel. These techniques are especially useful for performing a grid search.</p>
+<p>Happy optimizing!</p>
+</div>
