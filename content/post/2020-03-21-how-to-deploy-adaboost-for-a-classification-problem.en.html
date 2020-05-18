@@ -1,0 +1,858 @@
+---
+title: A general application of AdaBoost and Gradient Boosting for a classification task  
+author: Rachit Kinger
+date: '2020-03-21'
+slug: how-to-deploy-adaboost-for-a-classification-problem
+categories:
+  - data science  
+  - R
+tags:
+  - AdaBoost
+  - boosting
+  - classification
+  - Gradient boosting
+  - XGBoost
+subtitle: 'An implementation in R using JOUSBoost and XGBoost'
+---
+
+
+
+<p>Since its inception, AdaBoost (acronym for <em>Adaptive Boost</em>) by Freund and Schapire (1997) has been a very popular among data scientists. While it has evolved in many ways (Discrete AdaBoost, Real AdaBoost, etc) it’s popularity has not dwindled. In fact, Breiman (NIPS Workshop, 1996) referred to AdaBoost with trees as the “best off-the-shelf classifier in the world” (see also Breiman (1998)).</p>
+<p>Recently, my team was given a classification task. The objective was to determine if the closest match that we found for an entity was a good a match or not. It was a binary classification task. We tried many methods - support vector machines, logistic regression, lasso regression, random forest - but ultimately none of these were any match for AdaBoost. A close second was Gradient Boosting. In this notebook I will take you through an implementation and benefits of boosting and compare the performance of AdaBoost and Gradient Boosting.</p>
+<div id="classification-task" class="section level1">
+<h1>Classification task</h1>
+<p>For our classification task we are going to use the famous <a href="https://www.kaggle.com/c/titanic/data">Titanic dataset</a> (hosted by Kaggle). The task is to predict whether a passenger on board survived the sinking of the Titanic.</p>
+<div id="data-cleaning" class="section level2">
+<h2>Data cleaning</h2>
+<p>Since, the objective of the blog post is to practice boosting, I’m not going to explain most of the data cleaning steps. The main thing to note is that boosting algorithms require all the data to be numeric. In fact, I’m applying the same data cleaning steps that were created by Ranjeet Singh in <a href="https://www.kaggle.com/jeetranjeet619/titanic-xgboost-example-in-r">this notebook</a>.</p>
+<pre class="r"><code>library(tidyverse)
+train &lt;- readr::read_csv(&quot;2020-03-21-how-to-deploy-adaboost-for-a-classification-problem.en_files/input/titanic/train.csv&quot;)
+test &lt;- readr::read_csv(&quot;2020-03-21-how-to-deploy-adaboost-for-a-classification-problem.en_files/input/titanic/test.csv&quot;)
+# we are going to combine the train and test data so that we apply the same transformations on both datasets  
+# the column to predict is called Survived
+# it will be NA for all the rows that correspond to the test dataset
+tt &lt;- dplyr::bind_rows(train,test)
+tt$Survived = as.factor(tt$Survived)
+tt$Pclass = as.ordered(tt$Pclass)
+tt$Sex = as.factor(tt$Sex)
+tt$Age = as.numeric(tt$Age)
+tt$Embarked = as.factor(tt$Embarked)
+
+# impute missing data
+tt$Fare[1044] = median(tt$Fare[tt$Pclass == 3 &amp; tt$Embarked == &quot;S&quot;], na.rm = T)
+# transform the fare
+tt$Fare = log(tt$Fare)
+# impute Age with median : more values populated near median
+tt$Age[is.na(tt$Age) == T] = median(tt$Age, na.rm = TRUE)
+tt$Embarked[c(62,830)] = &quot;C&quot;
+
+
+for(i in 1:nrow(tt)){
+    if(grepl(pattern = &quot;Mr. &quot;, x = tt$Name[i], ignore.case = TRUE) ==  1){
+        tt$Title[i] = &quot;Mr&quot;
+    }else if(grepl(pattern = &quot;Mrs. &quot;, x = tt$Name[i], ignore.case = TRUE) ==  1){
+        tt$Title[i] = &quot;Mrs&quot;  
+    }else if(grepl(pattern = &quot;Miss. &quot;, x = tt$Name[i], ignore.case = TRUE) == 1){
+        tt$Title[i] = &quot;Miss&quot;
+    }else if(grepl(pattern = &quot;Master. &quot;, x = tt$Name[i], ignore.case = TRUE) ==  1){
+        tt$Title[i] = &quot;Master&quot;  
+    }else{
+        tt$Title[i] = &quot;Rare&quot; 
+    }
+}
+tt$Title = as.factor(tt$Title)
+
+
+######################################## family surname ####
+tt$Surname = sapply(tt$Name, function(x) strsplit(x, &quot;[,.]&quot;)[[1]][1])
+tt$Surname = as.factor(tt$Surname)        
+
+
+tt$Fsize = tt$SibSp + tt$Parch + 1 # including himself/herself
+
+
+###################################### Discrete family size ####
+tt$FsizeDiscrete[tt$Fsize == 1] = &quot;Singleton&quot;
+tt$FsizeDiscrete[tt$Fsize &lt;= 5 &amp; tt$Fsize &gt; 1] = &quot;Small&quot;
+tt$FsizeDiscrete[tt$Fsize &gt;5] = &quot;Large&quot;
+
+tt$FsizeDiscrete = as.factor(tt$FsizeDiscrete)
+
+
+# Is solo traveller ?
+# if tt$SibSp == 0 &amp;&amp; tt$Parch == 0, solo traveller : no siblings, no child nor parent onboard 
+tt$Solo = &quot;No&quot;
+tt$Solo[tt$SibSp == 0 &amp; tt$Parch == 0] = &quot;Yes&quot;
+tt$Solo = as.factor(tt$Solo)
+
+###################################### ageGroup ####
+# infants, children and old people are more likely to survive
+for(i in 1:nrow(tt)){
+    if(tt$Age[i] &lt;=4){
+        tt$AgeGroup[i] = &quot;Infant&quot; 
+    }else if(tt$Age[i] &gt; 4 &amp; tt$Age[i] &lt;= 10){
+        tt$AgeGroup[i] = &quot;Child&quot;
+    }else if(tt$Age[i] &gt; 10 &amp; tt$Age[i] &lt;= 18){
+        tt$AgeGroup[i] = &quot;Young&quot; 
+    }else if(tt$Age[i] &gt; 18 &amp; tt$Age[i] &lt;= 50){
+        tt$AgeGroup[i] = &quot;Adults&quot;
+    }else{
+        tt$AgeGroup[i] = &quot;Old&quot; 
+    }
+}
+
+tt$AgeGroup = as.factor(tt$AgeGroup)
+
+
+
+# mother and child : likely to survive ####
+tt$Mother = &quot;Not Mother&quot;
+tt$Mother[tt$Sex == &quot;female&quot; &amp; tt$Parch &gt; 0 &amp; tt$Age &gt; 18 &amp; tt$Title != &quot;Miss&quot;] = &quot;Mother&quot; 
+tt$Mother = as.factor(tt$Mother)
+
+############################################ fare range ####
+
+#md.pattern(tt[1:891,])
+
+# filter already numeric data 
+xgb_data = tt[,c(&quot;Survived&quot;,&quot;Age&quot;,&quot;SibSp&quot;,&quot;Parch&quot;,&quot;Fare&quot;,&quot;Fsize&quot;)]
+# One-hot ecoding 
+
+xgb_data$Plass_1 = ifelse(tt$Pclass == 1, 1, 0)
+xgb_data$Plass_2 = ifelse(tt$Pclass == 2, 1, 0)
+xgb_data$Plass_3 = ifelse(tt$Pclass == 3, 1, 0)
+
+# Sex 
+xgb_data$Sex_Male = ifelse(tt$Sex == &quot;male&quot;, 1, 0)
+
+# Embarked
+xgb_data$Embarked_C = ifelse(tt$Embarked == &quot;C&quot;, 1, 0)
+xgb_data$Embarked_Q = ifelse(tt$Embarked == &quot;Q&quot;, 1, 0)
+xgb_data$Embarked_S = ifelse(tt$Embarked == &quot;S&quot;, 1, 0)
+
+# Title
+xgb_data$Title_Mr = ifelse(tt$Title == &quot;Mr&quot;, 1, 0)
+xgb_data$Title_Mrs = ifelse(tt$Title == &quot;Mrs&quot;, 1, 0)
+xgb_data$Title_Miss = ifelse(tt$Title == &quot;Miss&quot;, 1, 0)
+xgb_data$Title_Master = ifelse(tt$Title == &quot;Master&quot;, 1, 0)
+xgb_data$Title_Rare = ifelse(tt$Title == &quot;Rare&quot;, 1, 0)
+
+# FsizeDiscrete
+xgb_data$FsizeDiscrete_Singleton = ifelse(tt$FsizeDiscrete == &quot;Singleton&quot;, 1, 0)
+xgb_data$FsizeDiscrete_Small = ifelse(tt$FsizeDiscrete == &quot;Small&quot;, 1, 0)
+xgb_data$FsizeDiscrete_Large = ifelse(tt$FsizeDiscrete == &quot;Large&quot;, 1, 0)
+
+# Solo
+xgb_data$Solo_Yes = ifelse(tt$Solo == &quot;Yes&quot;, 1, 0)
+
+
+# Age Group
+xgb_data$AgeGroup_Infant = ifelse(tt$AgeGroup == &quot;Infant&quot;, 1, 0)
+xgb_data$AgeGroup_Child = ifelse(tt$AgeGroup == &quot;Child&quot;, 1, 0)
+xgb_data$AgeGroup_Young = ifelse(tt$AgeGroup == &quot;Young&quot;, 1, 0)
+xgb_data$AgeGroup_Adult = ifelse(tt$AgeGroup == &quot;Adults&quot;, 1, 0)
+xgb_data$AgeGroup_Old = ifelse(tt$AgeGroup == &quot;Old&quot;, 1, 0)
+
+# mother
+xgb_data$Mother_Yes = ifelse(tt$Mother == &quot;Mother&quot;, 1, 0)
+
+############################# separate Training and testing dataset ###############################
+training_data = xgb_data[1:891,]
+testing_data = xgb_data[892:1309,]
+training_data$Survived =  as.factor(training_data$Survived)
+testing_data$Survived = NULL # removing dependent variable from testing dataset
+### since we don&#39;t have access to actual test labels, we are going to create our own test data and we are going to
+## call it dev data. We will get this data from our training data set
+
+set.seed(1122)
+devIndex = sample(1:891, 90, replace=FALSE)
+dev_data = training_data[devIndex, ]
+train_data = training_data[-devIndex,] # note that this is different from &#39;training_data&#39; sorry about the confusion
+
+############################################# Basic Boosting Model ########################################
+
+y_train = train_data$Survived %&gt;% as.integer()
+y_train = y_train -1
+y_train_ada = ifelse(y_train == 1, 1, -1) #JOUSBoost library requires labels in (1,-1)
+train_data$Survived = NULL
+
+
+x_train = as.matrix(train_data)
+
+y_dev = dev_data$Survived %&gt;% as.integer()
+y_dev = y_dev -1
+y_dev_ada = ifelse(y_dev == 1, 1, -1) #JOUSBoost library requires labels in (1,-1)
+dev_data$Survived = NULL
+
+
+x_dev = as.matrix(dev_data)</code></pre>
+<p>While the data transformation steps designed by Ranjeet are very clever, if you did not follow all the steps do not worry. For now all you need to know is that boosting algorithms only need numeric data and Ranjeet has done a brilliant job of not only converting all data into a numeric format but also of feature engineering. I’m particulalry impressed by they way he tried to measure if the passenger is part of a family unit or not, and also if a passenger is single or married, etc. These are very strong signals for whether someone survived the Titanic disaster or not.</p>
+</div>
+<div id="a-brief-note-on-boosting-algorithms" class="section level2">
+<h2>A brief note on boosting algorithms</h2>
+<p>Let’s say we have a single decision tree, a classifier that we can call <span class="math inline">\(G(X)\)</span>. It classifies whether a passenger has survived the titatic disaster or not. Boosting is part of a family of ‘additivie models’, which basically means that when it tries to improve its prediction it does not change the coefficients of the function (<span class="math inline">\(G(X)\)</span>) that generated the prediction. Instead it looks at those predictions that were incorrectly classified (<span class="math inline">\(y(i) \neq \hat{y}(i)\)</span>) and tries to predict them better in the next iteration by <em>adding</em> another function (<span class="math inline">\(G_{new}(X)\)</span>). It keeps on doing this until it is asked to stop. The opposite of this is a <em>‘discriminative model’</em> e.g. simple regression, wherein our model keeps trying to improve the original <span class="math inline">\(G(X)\)</span> by either OLS or MLE.</p>
+<p>In the case of boosting each <span class="math inline">\(G_i(X)\)</span> is also called a classifier, or a tree (since we are basically using a ‘tree’ to predict). The number of trees therefore becomes an important parameter. If we have too many of them, we end up overfitting our model to the training data – we can detect this by seeing that our accuracy on training data is increasing but our accuracy on a validation (or dev data) has started to decrease (we will show that AdaBoost is resistant to overfitting but unfortunately that is not the case with gradient boosting) There are ways to prevent overfitting (look up regularisation techniques, shrinkage, cross-fold validation, early stopping). The number of trees in the Gradient Boosting algorithm is also called number of iterations or number of rounds (if you come across them they mean the same thing)</p>
+<div id="tree-depth-when-tree-depth-is-1-its-called-a-stump" class="section level3">
+<h3>Tree depth, when tree depth is 1 its called a stump</h3>
+<p>The other parameter of importance is the depth of the tree. This can also cause overfitting. Traditional tree based models have very deep trees and then they are pruned to a level where the analyst feels they provide the most generalizable results. In Boosting algorithms, we generally avoid deep trees. Our AdaBoost had tree depth at 1 (a tree with depth=1 is also called a <em>stump</em>). Gradient boosting generally has a tree depth between 2 and 8.</p>
+</div>
+<div id="difference-between-adaboost-and-gradient-boost" class="section level3">
+<h3>Difference between AdaBoost and Gradient Boost</h3>
+<p>The main difference between AdaBoost and Gradient Boosting is how the model improves the next prediction. They use different loss functions or objective functions. (AdaBoost uses exponential function while gradient boosting can potentially use any function as long as it is continuous, and differentiable and has a global maxima).</p>
+</div>
+<div id="but-what-is-boosting-anyway" class="section level3">
+<h3>But what is boosting anyway?</h3>
+<p>The reason that boosting works has been referred to as <em>the wisdom of the crowds</em>. Basically when we have a bunch of weak classifiers, we pool them all together and take a popular vote –&gt; that is kind of a boosting i.e. we boost the predictive power of weak classifiers by adding them all together. A <strong>weak classifier</strong> is one which has a predictive accuracy of slightly over 50% so it is only marginally useful as it is only slightly better than random guessing. However, if we have lots of these weak classifiers their additive power can make them useful.</p>
+</div>
+<div id="building-a-baseline-model-for-comparison" class="section level3">
+<h3>Building a baseline model for comparison</h3>
+<p>Before we optimize the GBM model we will build a baseline model just to check if it gives an accuracy that is in the ballpark of what we need &gt;70%.</p>
+<p>We are going to use the following tuning parameters and initially set them to:<br />
+- <code>n.trees</code> = 10<br />
+- <code>interaction.depth</code> = 2 (1 would mean stumps, exactly as in AdaBoost)<br />
+- <code>n.minobsinnode</code> = 10 (later we will do stochastic learning, but for now we will stick with 10)<br />
+- <code>shrinkage</code> or learning rate = 0.001 Start at 0.001 and gradually take it down further to 0.0001 (NB. learning rate and number of trees are inversely related which means we will take our <code>n.trees</code> gradually higher by a similar factor, so we could end up with 10,000 trees)</p>
+<p>We will start with the <code>gbm</code> (Generalized Boosted Models) package because of its simplicity. Once we have established a good baseline, we will go for intense optimisation and cross validation across a grid. In that case we will move onto <code>XGBoost</code> (Extreme Gradient Boosting) package which is a computationally efficient library (for python users, XGBoost goes by the same name in Python and is also a sub-package within scikit-learn).</p>
+</div>
+<div id="the-risk-of-overfitting" class="section level3">
+<h3>The risk of overfitting</h3>
+<p>For most data scientists the goal is to run our models in production and therefore we are more concerned with production accuracy than training or test accuracy. We will use a two point strategy to avoid over-fiting:</p>
+<ul>
+<li>use a very low value for shrinkage ~ 0.0001<br />
+</li>
+<li>deploy early stopping to avoid over-optimisation on training set</li>
+</ul>
+</div>
+</div>
+<div id="deploying-adaboost" class="section level2">
+<h2>Deploying AdaBoost</h2>
+<p>For comparison purposes we will do a quick deployment of a baseline model with acceptable parameters as declared above.</p>
+<pre class="r"><code>library(gbm) # package for efficient implementation of AdaBoost 
+
+# since gbm needs a dataframe object we will not use our x_train matrix right now
+baseline &lt;- gbm(y_train ~ ., data = train_data, distribution = &quot;bernoulli&quot;, n.trees = 10)
+baseline_preds &lt;- predict(baseline, dev_data, type=&#39;response&#39;, n.trees=100)
+baseline_preds &lt;- baseline_preds &gt; 0.5 # if prob is &gt;0.5 then we call it 1 else 0
+baseline_conf &lt;- table(y_dev, baseline_preds)
+baseline_precision &lt;- baseline_conf[2,2]/sum(baseline_conf[,2])
+baseline_recall = baseline_conf[2,2]/sum(baseline_conf[2,])
+baseline_accuracy = (baseline_conf[1,1] + baseline_conf[2,2]) / length(y_dev)
+baseline_f1Score = 2 * baseline_precision * baseline_recall / (baseline_precision + baseline_recall)
+knitr::kable(
+  data.frame(`Baseline Metrics` = c(&#39;Accuracy&#39;, &#39;Precision&#39;, &#39;Recall&#39;, &#39;F1-Score&#39;),
+           Values = scales::percent(c(baseline_accuracy, baseline_precision, baseline_recall, baseline_f1Score)))
+)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Baseline.Metrics</th>
+<th align="left">Values</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Accuracy</td>
+<td align="left">77.8%</td>
+</tr>
+<tr class="even">
+<td align="left">Precision</td>
+<td align="left">69.2%</td>
+</tr>
+<tr class="odd">
+<td align="left">Recall</td>
+<td align="left">60.0%</td>
+</tr>
+<tr class="even">
+<td align="left">F1-Score</td>
+<td align="left">64.3%</td>
+</tr>
+</tbody>
+</table>
+<p>We can see that AdaBoost has already done a pretty good job of this classification. On the dev dataset (which is practically a test dataset) we have acheived 78% accuracy.</p>
+</div>
+<div id="optimising-adaboost-using-grid-search" class="section level2">
+<h2>Optimising AdaBoost using grid search</h2>
+<p>We will now run an extensive grid search to look for the best parameters. When we do this, we will intentionally go to an extreme extent partly for educational purposes and partly because we want actually see whether AdaBoost is resistant to overfitting. For example we will build a 1000 trees even though we only have 801 observations in our training dataset (which is ridiculous but we will do it anyway).</p>
+<p><stuff below this has not been deployed or coded properly yet></p>
+<pre class="r"><code>library(JOUSBoost) # package for efficient AdaBoost implementation
+set.seed(583)
+
+tree_depth = 1:15
+n_trees = c(
+  (seq(from = 10, to = 200, by = 10)),
+  (seq(from = 250, to = 1000, by = 50)))
+# AdaBoost will run 555 times. This is going to take a long time!
+
+start_time &lt;- Sys.time()
+
+# packages for parallel processing
+library(doSNOW)
+library(foreach)
+
+numOfclusters &lt;- 10 # yup, i&#39;ve got 10+ clusters on my machine :)
+cl &lt;- makeCluster(numOfclusters)
+registerDoSNOW(cl)
+
+adaBoost_grid &lt;-
+  foreach(t = tree_depth) %:%
+    foreach(n = n_trees) %dopar% {
+      mod = JOUSBoost::adaboost(X = x_train, y=y_train_ada, tree_depth = t, n_rounds =n)
+      # training results
+      tr_conf = mod$confusion_matrix
+      tr_precision = tr_conf[2,2]/sum(tr_conf[,2])
+      tr_recall = tr_conf[2,2]/sum(tr_conf[2,])
+      tr_accuracy = (tr_conf[1,1] + tr_conf[2,2]) / length(y_train_ada)
+      tr_f1_score = 2 * tr_precision * tr_recall / (tr_precision + tr_recall)
+
+      # dev_test results
+      preds = JOUSBoost::predict.adaboost(mod, X=x_dev, type=&quot;response&quot;)
+      conf = table(y_dev_ada, preds)
+      precision = conf[2,2]/sum(conf[,2])
+      recall = conf[2,2]/sum(conf[2,])
+      accuracy = (conf[1,1] + conf[2,2]) / length(y_dev_ada)
+      f1_score = 2 * precision * recall / (precision + recall)
+
+      # metrics to append
+      model_results = data.frame(algo = &quot;AdaBoost&quot;,
+                           tree_depth = t,
+                           n_trees = n,
+                           accuracy = accuracy,
+                           precision = precision,
+                           recall = recall,
+                           f1_score = f1_score,
+                           training_accuracy = tr_accuracy,
+                           training_precision = tr_precision,
+                           training_recall = tr_recall,
+                           training_f1_score = tr_f1_score,
+                           stringsAsFactors = FALSE)
+
+      # final list item to return
+      list(model = mod, metrics = model_results)
+
+    }
+stopCluster(cl)
+end_time = Sys.time()
+
+print(str_c(
+  &quot;Grid search completed.&quot;,
+  &quot; Time elapsed: &quot;,
+  (end_time - start_time),
+  sep=&quot;&quot;
+))</code></pre>
+<pre><code>## [1] &quot;Grid search completed. Time elapsed: 6.7166993021965&quot;</code></pre>
+<pre class="r"><code># we have a nested list where each item corresponds to tree_depth (1 to 15)
+# and inside each tree_depth we have one item for each num_trees
+# we are going to collapse it all into one dataframe
+adaboost_metrics &lt;- 
+  lapply(adaBoost_grid, function(outside_item) 
+    {lapply(outside_item, function(inside_item)
+      { inside_item[[&#39;metrics&#39;]]})})
+adaboost_metrics &lt;- as_tibble(bind_rows(lapply(adaboost_metrics, bind_rows)))</code></pre>
+<div id="adaboost-is-resistant-to-overfitting" class="section level3">
+<h3>AdaBoost is resistant to overfitting</h3>
+<p>Below we can already see that even though our training accruacy has reached as high as 98.5% our test accuracy is adamantly stuck at ~82%. This is unusualy since for most ML models as training_accuracy increases the test accuracy worsens because of overfitting. But we can see that AdaBoost is stubbornly resistant to overfitting.</p>
+<pre class="r"><code>knitr::kable(adaboost_metrics %&gt;% 
+  select(algo, tree_depth, n_trees, training_accuracy, accuracy) %&gt;% 
+  arrange(desc(training_accuracy), desc(accuracy)) %&gt;% 
+  sample_n(10))</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">algo</th>
+<th align="right">tree_depth</th>
+<th align="right">n_trees</th>
+<th align="right">training_accuracy</th>
+<th align="right">accuracy</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">AdaBoost</td>
+<td align="right">5</td>
+<td align="right">500</td>
+<td align="right">0.9637953</td>
+<td align="right">0.8888889</td>
+</tr>
+<tr class="even">
+<td align="left">AdaBoost</td>
+<td align="right">8</td>
+<td align="right">250</td>
+<td align="right">0.9850187</td>
+<td align="right">0.8222222</td>
+</tr>
+<tr class="odd">
+<td align="left">AdaBoost</td>
+<td align="right">7</td>
+<td align="right">20</td>
+<td align="right">0.9837703</td>
+<td align="right">0.8555556</td>
+</tr>
+<tr class="even">
+<td align="left">AdaBoost</td>
+<td align="right">1</td>
+<td align="right">350</td>
+<td align="right">0.8339576</td>
+<td align="right">0.8111111</td>
+</tr>
+<tr class="odd">
+<td align="left">AdaBoost</td>
+<td align="right">7</td>
+<td align="right">80</td>
+<td align="right">0.9837703</td>
+<td align="right">0.8555556</td>
+</tr>
+<tr class="even">
+<td align="left">AdaBoost</td>
+<td align="right">3</td>
+<td align="right">20</td>
+<td align="right">0.8526841</td>
+<td align="right">0.8111111</td>
+</tr>
+<tr class="odd">
+<td align="left">AdaBoost</td>
+<td align="right">10</td>
+<td align="right">110</td>
+<td align="right">0.9837703</td>
+<td align="right">0.8333333</td>
+</tr>
+<tr class="even">
+<td align="left">AdaBoost</td>
+<td align="right">13</td>
+<td align="right">190</td>
+<td align="right">0.9837703</td>
+<td align="right">0.8222222</td>
+</tr>
+<tr class="odd">
+<td align="left">AdaBoost</td>
+<td align="right">2</td>
+<td align="right">750</td>
+<td align="right">0.8489388</td>
+<td align="right">0.8222222</td>
+</tr>
+<tr class="even">
+<td align="left">AdaBoost</td>
+<td align="right">8</td>
+<td align="right">150</td>
+<td align="right">0.9850187</td>
+<td align="right">0.8222222</td>
+</tr>
+</tbody>
+</table>
+<p>At a broad level we can observe that for each of our models, the highest training accuracy is reached fairly early and after that it holds steady. The test accuracy also reaches its maxima around the same point and holds steady. To look at how resistant AdaBoost is to overfitting we will zoom in on one type of model.</p>
+<p>In this model we can see that even though our training accuracy has been steadily climbing from ~85% to ~97% our test accuracy has been holding steady at ~85%. Most data scientists who see AdaBoost results for the first time are very pleasantly surprised by this property of AdaBoost. Incidentally, even the original creators of AdaBoost, Freund and Schapire (1997), have not been able to explain why this happens.</p>
+<pre class="r"><code>adaboost_metrics %&gt;% 
+  filter(tree_depth == 5, n_trees &lt; 60) %&gt;% 
+  mutate(tree_depth = as.factor(tree_depth)) %&gt;% 
+  mutate(type_training = &quot;Training&quot;) %&gt;% 
+  mutate(type_dev = &quot;Dev&quot;) %&gt;% 
+  ggplot(aes(x=n_trees)) + 
+  geom_line(aes( y=training_accuracy, lty=type_training, colour = tree_depth)) +
+  geom_line(aes( y=accuracy, lty=type_dev, colour = tree_depth)) +
+  ylab(&quot;Accuracy&quot;) + 
+  xlab(&quot;Number of classifiers&quot;) + 
+  ylim(0,1) +
+  ggtitle(&quot;Bias and variance for AdaBoost&quot;) + 
+  scale_linetype_discrete(name=&quot;Accuracy type&quot;,
+                          labels = c(&quot;Dev&quot;, &quot;Training&quot;)) + 
+  scale_color_discrete(name=&quot;Tree Depth&quot;) +
+  theme_minimal()</code></pre>
+<p><img src="/post/2020-03-21-how-to-deploy-adaboost-for-a-classification-problem.en_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+</div>
+<div id="selecting-our-best-adaboost-model" class="section level3">
+<h3>Selecting our best AdaBoost model</h3>
+<div id="occams-razor---all-other-things-equal-go-with-the-simplest-model" class="section level4">
+<h4>Occam’s razor - all other things equal, go with the simplest model :)</h4>
+<p>Since our Kaggle task is to predict who will survive and who will not, our ideal metric is accuracy. In our case, we will pick the model that has the highest test accuracy.</p>
+<pre class="r"><code>adaboost_metrics %&gt;% 
+  top_n(1, accuracy)</code></pre>
+<pre><code>## # A tibble: 34 x 11
+##    algo  tree_depth n_trees accuracy precision recall f1_score training_accura…
+##    &lt;chr&gt;      &lt;int&gt;   &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt;  &lt;dbl&gt;    &lt;dbl&gt;            &lt;dbl&gt;
+##  1 AdaB…          5      10    0.889     0.833  0.833    0.833            0.893
+##  2 AdaB…          5      40    0.889     0.857  0.8      0.828            0.966
+##  3 AdaB…          5      50    0.889     0.833  0.833    0.833            0.964
+##  4 AdaB…          5      60    0.889     0.833  0.833    0.833            0.964
+##  5 AdaB…          5      70    0.889     0.833  0.833    0.833            0.964
+##  6 AdaB…          5      80    0.889     0.833  0.833    0.833            0.964
+##  7 AdaB…          5      90    0.889     0.833  0.833    0.833            0.964
+##  8 AdaB…          5     100    0.889     0.833  0.833    0.833            0.964
+##  9 AdaB…          5     110    0.889     0.833  0.833    0.833            0.964
+## 10 AdaB…          5     120    0.889     0.833  0.833    0.833            0.964
+## # … with 24 more rows, and 3 more variables: training_precision &lt;dbl&gt;,
+## #   training_recall &lt;dbl&gt;, training_f1_score &lt;dbl&gt;</code></pre>
+<p>We can see that out of our 540 models 34 have achieved the same max accuracy. In this case, we will go for the model that is simplest among the lot. We can define complexity as directly proportional to:</p>
+<ul>
+<li>tree depth<br />
+</li>
+<li>number of trees</li>
+</ul>
+<pre class="r"><code># final model specs  
+adab_final_metrics &lt;- 
+  adaboost_metrics %&gt;% 
+  top_n(1, accuracy) %&gt;% 
+  top_n(1, -tree_depth) %&gt;% 
+  top_n(1, -n_trees)
+knitr::kable(adab_final_metrics %&gt;% 
+               select(algo, tree_depth, accuracy, precision, recall, f1_score))  </code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">algo</th>
+<th align="right">tree_depth</th>
+<th align="right">accuracy</th>
+<th align="right">precision</th>
+<th align="right">recall</th>
+<th align="right">f1_score</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">AdaBoost</td>
+<td align="right">5</td>
+<td align="right">0.8888889</td>
+<td align="right">0.8333333</td>
+<td align="right">0.8333333</td>
+<td align="right">0.8333333</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code># extracting our final AdaBoost model from our grid search object  
+adaBoost_final &lt;- adaBoost_grid[[5]][[1]][[&#39;model&#39;]]</code></pre>
+</div>
+</div>
+</div>
+<div id="deploying-and-optimising-gradient-boosting-using-xgboost" class="section level2">
+<h2>Deploying and optimising Gradient Boosting using XGBoost</h2>
+<p>Now we will perform a grid search to look for the optimal solution and move on to XGBoost library since it is more efficient.</p>
+<p>We will use only two parameters in our grid search.</p>
+<ol style="list-style-type: decimal">
+<li>Tree depth: we will go from 1 to 8<br />
+</li>
+<li>Shrinkage: we will decrease by a factor of 10 (from 0.1 to 0.0001)</li>
+</ol>
+<p><em>Why are we not optimizing for other parameters?</em><br />
+In AdaBoost we did a grid search for number of trees as well but we can avoid that in XGBoost because it has the option of early stopping. Early stopping basically means that if accuracy does not improve after N continuous trees (set at 100) then the algorithm will automatically stop.</p>
+<p>We will not use L1 &amp; L2 regularisation because our data set is too small for it to need that level of regularisation (how do I know? I have already tried them in the console and they didn’t do much :)</p>
+<pre class="r"><code>library(xgboost)
+
+# prepare data for XGBoost
+# one adavantage of XGBoost is that it stores results of subsequent iterations 
+# in something called a watchlist, we will take advantage of that
+
+# we will build two matrices (one for training and one for validation) and then join them together
+dtrain &lt;- xgb.DMatrix(data = x_train,
+                      label=y_train)
+dvalidation &lt;- xgb.DMatrix(data= x_dev,
+                           label = y_dev)
+watchlist &lt;- list(train=dtrain, validation=dvalidation)
+
+
+# the following params will vary
+max_depth &lt;- 2:8 
+shrinkage &lt;- c(0.1, 0.01, 0.001, 0.0001) 
+xgb_models &lt;- list()
+
+start_time &lt;- Sys.time()
+
+for(d in max_depth) {
+  for(s in shrinkage){
+    param &lt;- list(
+        set.seed = 586,
+        objective = &quot;binary:logistic&quot;,
+        eta = s,
+        max_depth = d,
+        colsamplebytree = 0.8,
+        subsample = 0.8, 
+        #min_child_weight = 3,
+        base_score = 0.50,
+        #lambda = 100,
+        #lambda_bias = 5,
+        #alpha = 0.1,
+        verbose = FALSE
+      )
+
+      mod = xgboost::xgb.train(
+        params = param,
+        data = dtrain, 
+        nrounds = 1000,
+        watchlist = watchlist, 
+        nthread = 10,
+        maximize = FALSE,
+        early_stopping_rounds = 100,
+        verbose = FALSE)
+      
+      xgb_models = append(xgb_models, list(mod))
+  }
+}
+
+
+end_time = Sys.time()
+
+print(str_c(
+  &quot;Grid search completed.&quot;,
+  &quot; Time elapsed: &quot;,
+  (end_time - start_time),
+  &quot;seconds&quot;,
+  sep=&quot;&quot;
+))</code></pre>
+<pre><code>## [1] &quot;Grid search completed. Time elapsed: 5.20081496238708seconds&quot;</code></pre>
+<p>Creating a dataframe which nicely collates the results of all XGBoost models that we ran.</p>
+<pre class="r"><code>xgb_metrics &lt;- data.frame(algo = character(),
+                           tree_depth = integer(),
+                           n_trees = integer(),
+                           shrinkage = numeric(),
+                           accuracy = numeric(),
+                           precision = numeric(),
+                           recall = numeric(),
+                           f1_score = numeric(),
+                           training_accuracy = numeric(),
+                           training_precision = numeric(),
+                           training_recall = numeric(),
+                           training_f1_score = numeric(),
+                           stringsAsFactors = FALSE)
+
+# get sequential list of depth and shrinkage as they were deployed
+d = rep(max_depth, 4)
+s = rep(shrinkage, 7)
+
+ConfusionMatrix &lt;- function(prediction, truth) {
+  conf &lt;- table(truth, prediction)
+  df &lt;- data.frame(precision = conf[2,2]/sum(conf[,2]),
+            recall = conf[2,2]/sum(conf[2,]),
+            accuracy = (conf[1,1] + conf[2,2]) / length(prediction))
+  df$f1 &lt;- 2/((1/df$precision) + (1/df$recall))
+  return(list(confusion_matrix=conf, metrics=df))
+}
+
+for(i in 1:28) {
+  mod = xgb_models[[i]]
+  preds = predict(mod, dvalidation, type=&quot;response&quot;)
+  validation_metrics = ConfusionMatrix(preds &gt; 0.5, y_dev)$metrics
+  
+  
+  training_preds = predict(mod, dtrain, type=&quot;response&quot;)
+  training_metrics = ConfusionMatrix(training_preds &gt; 0.5, y_train)$metrics
+  
+  xgb_metrics &lt;- xgb_metrics %&gt;% 
+    add_row(algo = &quot;Gradient Boosting&quot;,
+           tree_depth = d[i],
+           n_trees = mod$niter,
+           shrinkage = s[i],
+           accuracy = validation_metrics$accuracy,
+           precision = validation_metrics$precision,
+           recall = validation_metrics$recall,
+           f1_score = validation_metrics$f1,
+           training_accuracy = training_metrics$accuracy,
+           training_precision = training_metrics$precision,
+           training_recall = training_metrics$recall,
+           training_f1_score = training_metrics$f1)
+  
+}
+
+knitr::kable(
+  xgb_metrics %&gt;% 
+    select(algo, tree_depth, n_trees, shrinkage, accuracy, training_accuracy) %&gt;% 
+    sample_n(10))</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">algo</th>
+<th align="right">tree_depth</th>
+<th align="right">n_trees</th>
+<th align="right">shrinkage</th>
+<th align="right">accuracy</th>
+<th align="right">training_accuracy</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Gradient Boosting</td>
+<td align="right">2</td>
+<td align="right">231</td>
+<td align="right">1e-01</td>
+<td align="right">0.9000000</td>
+<td align="right">0.8651685</td>
+</tr>
+<tr class="even">
+<td align="left">Gradient Boosting</td>
+<td align="right">7</td>
+<td align="right">160</td>
+<td align="right">1e-01</td>
+<td align="right">0.9000000</td>
+<td align="right">0.9101124</td>
+</tr>
+<tr class="odd">
+<td align="left">Gradient Boosting</td>
+<td align="right">7</td>
+<td align="right">106</td>
+<td align="right">1e-04</td>
+<td align="right">0.8555556</td>
+<td align="right">0.8776529</td>
+</tr>
+<tr class="even">
+<td align="left">Gradient Boosting</td>
+<td align="right">4</td>
+<td align="right">110</td>
+<td align="right">1e-03</td>
+<td align="right">0.8222222</td>
+<td align="right">0.8239700</td>
+</tr>
+<tr class="odd">
+<td align="left">Gradient Boosting</td>
+<td align="right">6</td>
+<td align="right">105</td>
+<td align="right">1e-04</td>
+<td align="right">0.8555556</td>
+<td align="right">0.8476904</td>
+</tr>
+<tr class="even">
+<td align="left">Gradient Boosting</td>
+<td align="right">6</td>
+<td align="right">107</td>
+<td align="right">1e-03</td>
+<td align="right">0.8666667</td>
+<td align="right">0.8739076</td>
+</tr>
+<tr class="odd">
+<td align="left">Gradient Boosting</td>
+<td align="right">2</td>
+<td align="right">107</td>
+<td align="right">1e-03</td>
+<td align="right">0.8222222</td>
+<td align="right">0.8501873</td>
+</tr>
+<tr class="even">
+<td align="left">Gradient Boosting</td>
+<td align="right">6</td>
+<td align="right">191</td>
+<td align="right">1e-01</td>
+<td align="right">0.9000000</td>
+<td align="right">0.8926342</td>
+</tr>
+<tr class="odd">
+<td align="left">Gradient Boosting</td>
+<td align="right">4</td>
+<td align="right">103</td>
+<td align="right">1e-04</td>
+<td align="right">0.8666667</td>
+<td align="right">0.8714107</td>
+</tr>
+<tr class="even">
+<td align="left">Gradient Boosting</td>
+<td align="right">8</td>
+<td align="right">130</td>
+<td align="right">1e-03</td>
+<td align="right">0.8444444</td>
+<td align="right">0.8339576</td>
+</tr>
+</tbody>
+</table>
+<div id="selecting-the-best-xgboost-model" class="section level3">
+<h3>Selecting the best XGBoost model</h3>
+<pre class="r"><code>xgb_metrics %&gt;% 
+  ggplot(aes(x=tree_depth, y = accuracy)) + 
+  geom_point(aes(colour = as.factor(shrinkage)), position= &quot;jitter&quot;) + 
+  scale_color_discrete(&quot;Shrinkage&quot;) + 
+  ggtitle(&quot;Accuracy of each model that ran on XGBoost&quot;)</code></pre>
+<p><img src="/post/2020-03-21-how-to-deploy-adaboost-for-a-classification-problem.en_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<p>Surprisingly, XGBoost has hit 90% test accuracy. The model that actually did it has tree_depth = 2 and shrinkage = 0.1. Let’s pull out the top performing models.</p>
+<pre class="r"><code># pull up the top 3 accuracy metrics
+knitr::kable(
+xgb_metrics %&gt;% 
+  top_n(3, accuracy) %&gt;% 
+  select(algo, tree_depth, n_trees, shrinkage, accuracy, training_accuracy))</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">algo</th>
+<th align="right">tree_depth</th>
+<th align="right">n_trees</th>
+<th align="right">shrinkage</th>
+<th align="right">accuracy</th>
+<th align="right">training_accuracy</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Gradient Boosting</td>
+<td align="right">2</td>
+<td align="right">231</td>
+<td align="right">0.1</td>
+<td align="right">0.9</td>
+<td align="right">0.8651685</td>
+</tr>
+<tr class="even">
+<td align="left">Gradient Boosting</td>
+<td align="right">6</td>
+<td align="right">191</td>
+<td align="right">0.1</td>
+<td align="right">0.9</td>
+<td align="right">0.8926342</td>
+</tr>
+<tr class="odd">
+<td align="left">Gradient Boosting</td>
+<td align="right">7</td>
+<td align="right">160</td>
+<td align="right">0.1</td>
+<td align="right">0.9</td>
+<td align="right">0.9101124</td>
+</tr>
+</tbody>
+</table>
+<p>Apparently, there are two models that hit 90% accuracy and suprisingly, their training accuracy was actually lower (86%)! The other contenders for top spot are models hover around 89% so it’s worth considering them. Since most of them have a higher training accuracy, it is probably overfitting.</p>
+<p>It is tempting to go with the model with highest accuracy but given that we have an unusual case here wherein test accuracy is higher than training accuracy, it’s worth looking a bit more closely at our model. However, since the purpose of this blog post is to show how we can run a Gradient Boosting model and AdaBoost model, I’m not going into that.</p>
+<p>We will go ahead with our final XGBoost model.</p>
+<pre class="r"><code>xgb_final_metrics &lt;- 
+  xgb_metrics %&gt;% 
+  top_n(1, accuracy) %&gt;% 
+  filter(tree_depth==2)
+xgb_final &lt;- xgb_models[[1]]</code></pre>
+</div>
+</div>
+<div id="summary" class="section level2">
+<h2>Summary</h2>
+<pre class="r"><code>knitr::kable(
+data.frame(
+  Metrics    =                c(&#39;Test Accuracy&#39;, &#39;Test Precision&#39;, &#39;Test Recall&#39;, &#39;Test F1-Score&#39;),
+  Baseline   =scales::percent(c(baseline_accuracy, baseline_precision, baseline_recall, baseline_f1Score)),
+  AdaBoost   =scales::percent(c(adab_final_metrics$accuracy, adab_final_metrics$precision, adab_final_metrics$recall, adab_final_metrics$f1_score)),
+  XGBoost    =scales::percent(c(xgb_final_metrics$accuracy, xgb_final_metrics$precision, xgb_final_metrics$recall, xgb_final_metrics$f1_score))))</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Metrics</th>
+<th align="left">Baseline</th>
+<th align="left">AdaBoost</th>
+<th align="left">XGBoost</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Test Accuracy</td>
+<td align="left">77.8%</td>
+<td align="left">89%</td>
+<td align="left">90.0%</td>
+</tr>
+<tr class="even">
+<td align="left">Test Precision</td>
+<td align="left">69.2%</td>
+<td align="left">83%</td>
+<td align="left">88.9%</td>
+</tr>
+<tr class="odd">
+<td align="left">Test Recall</td>
+<td align="left">60.0%</td>
+<td align="left">83%</td>
+<td align="left">80.0%</td>
+</tr>
+<tr class="even">
+<td align="left">Test F1-Score</td>
+<td align="left">64.3%</td>
+<td align="left">83%</td>
+<td align="left">84.2%</td>
+</tr>
+</tbody>
+</table>
+<p>As we can see, AdaBoost and XGBoost have both come pretty close to each other with very similar F1-Scores. If we had a larger dataset we could have done a more comprehensive test, but for now we will have to settle it at a tie.</p>
+</div>
+</div>
