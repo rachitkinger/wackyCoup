@@ -4,10 +4,19 @@ comments: false
 ---
 My name is Rachit Kinger.  
 
-I blog about things in data science, digital inequality and linux that I found difficult to understand or learn. Professionally, I am head of data and analytics at a regional media company in the UK called Johnston Press. We publish close to 200 news sites that cover mainly small towns and villages in the UK. Some of our big titles include [The Scotsman](www.scotsman.com), [The Yorkshire Post](www.yorkshirepost.co.uk), [inews](inews.co.uk) *(which won the British Media Awards for the website of the year - in the same year that Guardian launched its new website!)*.  
+I blog about things in data science and linux (sometimes general and random hacks). Basically, things I found difficult to understand or learn. Professionally, I am ~~head of data and analytics at a media company in the UK called JPIMedia~~ head of data science at [Codec](www.codec.ai).  
 
-### My tech stack is simple  
-For data science I use R and RStudio but I am also familiar with Python for which use PyCharm with Anaconda distribution. My setup includes Dell XPS-15 (i7 quad core | 32 GB | Nvidia GPU) which I dual boot with Linux (Ubuntu 18.04) and Windows.   
+I love to hack solutions of all kinds: carpentry, plumbing, electrical circuits, cooking, gardening, bike fixing, my daughter's dresses and clothes, business problems and, last but not the least, data hacks!  
+
+
+
+### Talk to me about    
+
+* Digital media - understanding user behaviour to inform content strategy, subscription strategy _(psst. especially subscription strategy)_  
+* Building data pipelines in the cloud, especially Google Cloud  
+* Text analytics / NLP / text mining   
+* Data visualizations using Shiny, Data Studio, Plotly or simple pencil on paper :)  
+
 
 ### Lazy copy from [my twitter](https://twitter.com/rachitkinger) profile  
 > One time editor, digital product guy, trained to navigate a ship but prefer cycling. Spend lots of time studying the internet. #datanerd #rstats #londonR    

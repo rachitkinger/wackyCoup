@@ -15,9 +15,13 @@ pygmentsCodefencesGuessSyntax = true
 
 
 
+# to open links in a new tab
+[blackfriday] 
+  hrefTargetBlank = true
+
 [Params]
 # homeTitle = "Rachit Kinger" # Set a different text for the header on the home page
-  subtitle = "my journey in the field of data science, digital inequality and linux..."
+  subtitle = "my journey in the field of data science, digital media and linux..."
 #  logo = "img/avatar-icon-wc.png"
 #  favicon = "img/favicon-wc.ico"
   dateFormat = "January 2, 2006"
@@ -43,7 +47,7 @@ pygmentsCodefencesGuessSyntax = true
 
 [Author]
   name = "rachit kinger"
-  website = "wackyCoup.netlify.com"
+  website = "/"
   email = "rachit.kinger@gmail.com"
 #  facebook = "username"
 #  googleplus = "+username" # or xxxxxxxxxxxxxxxxxxxxx
@@ -65,6 +69,7 @@ pygmentsCodefencesGuessSyntax = true
 #  vk = "username"
 #  paypal = "username"
 #  telegram = "username"
+  ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
 
 [[menu.main]]
     name = "Blog"

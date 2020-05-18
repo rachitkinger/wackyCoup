@@ -1,0 +1,43 @@
+---
+title: How to use your system's default R in Anaconda or Jupyter Notebooks
+author: Rachit Kinger
+date: '2019-05-26'
+slug: how-to-use-your-systems-default-r-in-anaconda-or-jupyter-notebooks
+categories:
+  - r
+  - data science
+tags:
+  - anaconda
+  - jupyter notebook
+  - r
+subtitle: ''
+---
+
+
+
+<p>When using Jupyter Notebooks I like to use the version of R that I use by default in RStudio and not Anconda R. To enable this I do the following:</p>
+<ol style="list-style-type: decimal">
+<li>DO NOT install Anaconda R (assuming you have installed Anaconda)<br />
+</li>
+<li>Using R in your terminal – on linux it is <code>ctrl + alt + t</code> simply type R on the command line<br />
+</li>
+<li>Once in R in your terminal (not in RStudio), install IRkernel package by typing <code>install.packages("IRkernel")</code> and enter<br />
+</li>
+<li>After IRkernel is installed enter the command: <code>IRkernel::installspec()</code></li>
+</ol>
+<p>This should do the trick. Now open Jupyter Notebook or Lab and you should be able to use your default R kernel.</p>
+<p>If you are on Windows you have to follow slightly different steps, I’ve tried to lay them down below (note I’ve only tried it on Windows 10):</p>
+<ol style="list-style-type: decimal">
+<li>Get the path to your Window’s R. Usually it is in <code>C:\Program Files\R\R-3.6.0\bin</code><br />
+</li>
+<li>Now go to Anaconda Prompt (you should have this if you installed Anaconda3). Just search for it on your Start Menu<br />
+</li>
+<li>Navigate to your R path <code>cd C:\Program Files\R\R-3.6.0\bin</code> or at least mine is<br />
+</li>
+<li>Start R in this shell by typing <code>R.exe</code> and hitting enter<br />
+</li>
+<li>Now install IRkernel package as you would do normally - <code>install.packages("IRkernel")</code><br />
+</li>
+<li>Once installed enter the command: <code>IRkernel::installspec()</code></li>
+</ol>
+<p>That’s it. That should do the trick. Now fire up your Jupyter Notebook or Lab and you should be able to use your default system R kernel.</p>
